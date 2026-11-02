@@ -239,7 +239,12 @@ export function score(c, tasteGenres) {
   const genres = (c.details && c.details.genres) || [];
   const taste = genres.reduce((n, g) => n + (tasteGenres[g.id] || 0), 0);
   const pop = c.details ? Math.min(6, Math.log10(1 + (c.details.popularity || 0)) * 2) : 0;
-  return best + extra + Math.min(12, taste * 2) + pop;
+  // Un peu plus de poids aux titres récents (ou dont une saison vient de sortir).
+  const d = c.details || {};
+  const last = d.last_air_date || d.release_date || d.first_air_date || "";
+  const age = last ? (Date.now() - Date.parse(last)) / 31557600000 : 9;
+  const fresh = age < 1 ? 8 : age < 2.5 ? 5 : age < 5 ? 2 : 0;
+  return best + extra + Math.min(12, taste * 2) + pop + fresh;
 }
 
 export function reasonOf(c) {
@@ -259,19 +264,19 @@ export function primaryType(c) {
 const CAPS = { resume: 2, list: 3, top10: 1, video: 1, game: 1, similar: 2, trend: 2 };
 export function pick(cands, max, head = 8) {
   const sorted = cands.slice().sort((a, b) => b.score - a.score);
-  const out = [];
-  const rest = [];
+  const first = [];
   const perType = {};
   const perApp = {};
   for (const c of sorted) {
-    if (out.length >= max) break;
+    if (first.length >= head) break;
     const t = primaryType(c);
-    if (out.length < head && ((perType[t] || 0) >= (CAPS[t] || 2) || (perApp[c.app] || 0) >= 3)) { rest.push(c); continue; }
-    out.push(c);
+    if ((perType[t] || 0) >= (CAPS[t] || 2) || (perApp[c.app] || 0) >= 3) continue;
+    first.push(c);
     perType[t] = (perType[t] || 0) + 1;
     perApp[c.app] = (perApp[c.app] || 0) + 1;
   }
-  for (const c of rest) { if (out.length >= max) break; out.push(c); }
+  // Après l’accueil, tout le reste par score (dont ce que les quotas ont repoussé).
+  const out = first.concat(sorted.filter((c) => first.indexOf(c) < 0)).slice(0, max);
   // Au moins une vidéo et un jeu à l’accueil quand il y en a : ils prennent la place des dernières découvertes.
   for (const t of ["video", "game"]) {
     const n = Math.min(head, out.length);

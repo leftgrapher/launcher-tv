@@ -88,47 +88,62 @@ async function serializd() {
 // ── Letterboxd ───────────────────────────────────────────────
 const LB = "https://letterboxd.com/" + encodeURIComponent(cfg.letterboxd || "") + "/";
 
+// Letterboxd limite les lectures trop rapprochées : pages espacées, et ce qui a été lu est gardé si une page est refusée.
 async function lbPages(p) {
   const out = [];
+  let complete = true;
   for (let page = 1; page <= 40; page++) {
-    const html = await (await get(LB + p + (page > 1 ? "page/" + page + "/" : ""))).text();
+    let html;
+    try { html = await (await get(LB + p + (page > 1 ? "page/" + page + "/" : ""), {}, 2)).text(); } catch (e) { complete = false; break; }
     const items = L.lbPosters(html);
     out.push(...items);
     if (!items.length || !L.lbHasNext(html)) break;
-    await sleep(400);
+    await sleep(1500);
   }
-  return out;
+  return { items: out, complete };
 }
 
 async function lbTmdb(slug) {
   if (cache.lbFilms[slug]) return cache.lbFilms[slug];
-  const html = await (await get("https://letterboxd.com/film/" + slug + "/")).text();
+  const html = await (await get("https://letterboxd.com/film/" + slug + "/", {}, 1)).text();
   const t = L.lbFilmTmdb(html);
   if (t) cache.lbFilms[slug] = t;
-  await sleep(350);
+  await sleep(900);
   return t;
 }
 
 async function letterboxd() {
-  if (!cfg.letterboxd) return { watchlist: [], watched: [], diary: [] };
-  try {
-    const watchlist = await lbPages("watchlist/");
-    const watched = await lbPages("films/");
-    const diary = L.lbRss(await (await get(LB + "rss/")).text());
-    let fetched = 0;
-    for (const f of watchlist.concat(watched)) {
-      if (cache.lbFilms[f.slug] || fetched >= 250) continue;
-      try { await lbTmdb(f.slug); fetched++; } catch (e) {}
-    }
-    const withId = (list) => list.map((f) => Object.assign({}, f, cache.lbFilms[f.slug] || {})).filter((f) => f.tmdb);
-    const data = { watchlist: withId(watchlist), watched: withId(watched), diary };
-    cache.letterboxd = data;
-    log("Letterboxd :", data.watchlist.length, "dans ta watchlist,", data.watched.length, "films vus,", diary.length, "dans le journal");
-    return data;
-  } catch (e) {
-    log("Letterboxd indisponible (" + e.message + ") : dernière version connue.");
-    return cache.letterboxd || { watchlist: [], watched: [], diary: [] };
+  const empty = { watchlist: [], watched: [], diary: [] };
+  if (!cfg.letterboxd) return empty;
+  const prev = cache.letterboxd || empty;
+  const notes = [];
+  const wl = await lbPages("watchlist/");
+  await sleep(1500);
+  const wd = await lbPages("films/");
+  let diary = prev.diary;
+  try { diary = L.lbRss(await (await get(LB + "rss/", {}, 2)).text()); } catch (e) { notes.push("journal"); }
+  // Identifiants TMDB des films (mémorisés d’un passage à l’autre) ; on s’arrête au premier refus.
+  let fetched = 0;
+  for (const f of wl.items.concat(wd.items)) {
+    if (cache.lbFilms[f.slug] || fetched >= 120) continue;
+    try { await lbTmdb(f.slug); fetched++; } catch (e) { notes.push("fiches films"); break; }
   }
+  const withId = (list) => list.map((f) => Object.assign({}, f, cache.lbFilms[f.slug] || {})).filter((f) => f.tmdb);
+  const merge = (fresh, complete, old) => {
+    if (complete) return fresh;
+    const seen = new Set(fresh.map((f) => f.slug));
+    return fresh.concat((old || []).filter((f) => !seen.has(f.slug)));
+  };
+  if (!wl.complete) notes.push("watchlist");
+  if (!wd.complete) notes.push("films vus");
+  const data = {
+    watchlist: withId(wl.items.length || wl.complete ? merge(wl.items, wl.complete, prev.watchlist) : prev.watchlist),
+    watched: withId(merge(wd.items, wd.complete, prev.watched)),
+    diary
+  };
+  cache.letterboxd = data;
+  log("Letterboxd :", data.watchlist.length, "dans ta watchlist,", data.watched.length, "films vus,", diary.length, "dans le journal" + (notes.length ? " (en partie : " + notes.join(", ") + " refusé par Letterboxd, dernière version connue gardée)" : ""));
+  return data;
 }
 
 // ── TMDB ─────────────────────────────────────────────────────
@@ -290,14 +305,23 @@ async function main() {
     (j.results || []).slice(0, 8).forEach((r, i) => add(s.kind, r.id, { type: "similar", reason: "Parce que tu as aimé " + s.title, bonus: Math.max(0, 6 - i) }));
   });
 
-  // Tendances sur tes plateformes, en France.
+  // Tendances : ce qui monte cette semaine, et les nouveautés populaires sur tes plateformes (pas les vieux catalogues).
+  for (const kind of ["tv", "movie"]) {
+    for (const page of [1, 2]) {
+      const j = await tm("/trending/" + kind + "/week", { language: LANG, page });
+      (j.results || []).forEach((r, i) => add(kind, r.id, { type: "trend", reason: "Tendance", bonus: Math.max(0, 8 - Math.floor(((page - 1) * 20 + i) / 3)) }));
+    }
+  }
   const prov = await providerIds();
   const provList = [].concat(...Object.values(prov).map((s) => [...s])).join("|");
   if (provList) {
+    const since = new Date(Date.now() - 540 * 86400000).toISOString().slice(0, 10);
     for (const kind of ["tv", "movie"]) {
       const j = await tm("/discover/" + kind, {
         language: LANG, watch_region: REGION, with_watch_providers: provList,
-        with_watch_monetization_types: "flatrate", sort_by: "popularity.desc", "vote_count.gte": kind === "tv" ? 50 : 150
+        with_watch_monetization_types: "flatrate", sort_by: "popularity.desc",
+        "vote_count.gte": kind === "tv" ? 30 : 100,
+        [kind === "tv" ? "first_air_date.gte" : "primary_release_date.gte"]: since
       });
       (j.results || []).slice(0, 20).forEach((r, i) => add(kind, r.id, { type: "trend", reason: "Tendance", bonus: Math.max(0, 8 - Math.floor(i / 2)) }));
     }
