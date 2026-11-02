@@ -1,0 +1,6 @@
+node_modules/
+dist/
+# Police d’essai ABC Arizona, fond d’écran GTA VI et détourage : jamais en ligne (droits non cédés).
+private/
+.DS_Store
+.cache/

@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1920, initial-scale=1">
+<title>Launcher</title>
+<style>html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#05070E}</style>
+<script>
+// Coquille de l’appli TV : installée une seule fois, elle démarre le launcher et va chercher ses mises à jour en ligne.
+// 1. Démarrage immédiat avec la dernière version téléchargée (ou, à défaut, celle embarquée dans l’appli).
+// 2. En arrière-plan : si une nouvelle version est en ligne, elle est gardée et appliquée dès que la TV est au repos.
+(function () {
+  var REMOTE = "%REMOTE%";   // adresse du launcher en ligne (vide : version embarquée seulement)
+  var LOCAL = %LOCAL%;       // images et polices embarquées (dont les fichiers privés)
+  var BUNDLED = "%BUILD%";   // version embarquée
+  var KEY = "launcher.code";
+  window.__LAUNCHER__ = { local: LOCAL, localBase: "assets/", remoteBase: REMOTE ? REMOTE + "assets/" : "assets/", dataBase: REMOTE || null, build: BUNDLED };
+
+  var cached = null;
+  try { cached = JSON.parse(localStorage.getItem(KEY) || "null"); } catch (e) {}
+  // Une version téléchargée plus ancienne que celle embarquée (appli réinstallée entre-temps) est ignorée.
+  if (cached && !(cached.v > BUNDLED)) cached = null;
+
+  function start(code) {
+    var s = document.createElement("script");
+    if (code) s.text = code; else s.src = "launcher.js";
+    document.head.appendChild(s);
+    window.__LAUNCHER__.running = code ? cached.v : BUNDLED;
+  }
+  if (cached && cached.code) {
+    try { start(cached.code); } catch (e) { start(null); }
+  } else start(null);
+
+  if (!REMOTE || !window.fetch) return;
+  var lastKey = Date.now(), pending = false;
+  window.addEventListener("keydown", function () { lastKey = Date.now(); }, true);
+
+  function check() {
+    fetch(REMOTE + "version.json?t=" + Date.now(), { cache: "no-store" })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (v) {
+        if (!v || !v.v || v.v === window.__LAUNCHER__.running || pending) return;
+        return fetch(REMOTE + "launcher.js?v=" + encodeURIComponent(v.v), { cache: "no-store" })
+          .then(function (r) { return r.ok ? r.text() : null; })
+          .then(function (code) {
+            if (!code || code.length < 1000) return;
+            localStorage.setItem(KEY, JSON.stringify({ v: v.v, code: code }));
+            pending = true;
+          });
+      })
+      .catch(function () {});
+  }
+  // On applique la mise à jour quand personne n’utilise la télécommande depuis 2 minutes et que le launcher est à l’écran.
+  setInterval(function () {
+    if (pending && !document.hidden && Date.now() - lastKey > 120000) location.reload();
+  }, 15000);
+  document.addEventListener("visibilitychange", function () { if (!document.hidden) check(); });
+  setInterval(check, 30 * 60 * 1000);
+  setTimeout(check, 4000);
+})();
+</script>
+</head>
+<body>
+<div id="launcher"></div>
+</body>
+</html>

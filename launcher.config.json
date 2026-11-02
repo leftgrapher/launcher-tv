@@ -1,0 +1,27 @@
+{
+  "remote": "https://leftgrapher.github.io/launcher-tv/",
+  "recos": {
+    "letterboxd": "leftgrapher",
+    "serializd": "Leftgrapher",
+    "region": "FR",
+    "language": "fr-FR",
+    "platforms": [
+      "netflix",
+      "prime",
+      "appletv",
+      "hbo",
+      "crunchyroll",
+      "disney"
+    ],
+    "max": 14,
+    "youtube": {
+      "channelId": "",
+      "channels": [],
+      "max": 3,
+      "days": 10
+    },
+    "games": {
+      "days": 150
+    }
+  }
+}

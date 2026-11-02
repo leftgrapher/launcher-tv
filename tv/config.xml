@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<widget xmlns="http://www.w3.org/ns/widgets" xmlns:tizen="http://tizen.org/ns/widgets" id="http://theo.launcher/Launcher" version="%VERSION%" viewmodes="maximized">
+    <tizen:application id="ThLaunch01.Launcher" package="ThLaunch01" required_version="6.0"/>
+    <content src="index.html"/>
+    <feature name="http://tizen.org/feature/screen.size.normal.1080.1920"/>
+    <icon src="icon.png"/>
+    <name>Launcher</name>
+    <tizen:profile name="tv-samsung"/>
+    <!-- Ouvrir les autres applis, retrouver leur identifiant, afficher une entrée HDMI, recevoir les touches, télécharger les mises à jour. -->
+    <tizen:privilege name="http://tizen.org/privilege/application.launch"/>
+    <tizen:privilege name="http://tizen.org/privilege/application.info"/>
+    <tizen:privilege name="http://tizen.org/privilege/tv.window"/>
+    <tizen:privilege name="http://tizen.org/privilege/tv.inputdevice"/>
+    <tizen:privilege name="http://tizen.org/privilege/internet"/>
+    <tizen:setting screen-orientation="landscape" context-menu="disable" encryption="disable" install-location="auto" hwkey-event="enable"/>
+    <access origin="*" subdomains="true"/>
+</widget>

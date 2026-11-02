@@ -1,0 +1,89 @@
+/* ---- Main.dc.html ---- */
+body{margin:0;background:#05070E}
+button{font:inherit;color:inherit;border:0;margin:0;padding:0;cursor:pointer;-webkit-appearance:none;appearance:none}
+button:focus-visible{outline:3px solid #F5F5F7;outline-offset:8px}
+a{color:#F5F5F7}a:hover{color:#FFFFFF}
+/* Liquid glass : verre clair, liseré lumineux en dégradé (plus fort en haut à gauche) et reflet doux. --lg-fx coupe les effets (tuile sélectionnée, appareil débranché). */
+.lg{position:relative;isolation:isolate}
+.lg::before{content:"";position:absolute;inset:0;border-radius:inherit;padding:1.5px;background:linear-gradient(135deg,rgba(255,255,255,.75),rgba(255,255,255,.12) 32%,rgba(255,255,255,0) 58%,rgba(255,255,255,.32));-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;opacity:var(--lg-fx,1);transition:opacity 300ms ease;pointer-events:none}
+.lg::after{content:"";position:absolute;inset:0;border-radius:inherit;z-index:-1;background:radial-gradient(120% 90% at 22% 0%,rgba(255,255,255,.2),rgba(255,255,255,0) 55%);opacity:var(--lg-fx,1);transition:opacity 300ms ease;pointer-events:none}
+@keyframes heroIn{from{opacity:0;transform:translateY(12px);filter:blur(8px)}to{opacity:1;transform:none;filter:none}}
+@keyframes heroIn2{from{opacity:0;transform:translateY(12px);filter:blur(8px)}to{opacity:1;transform:none;filter:none}}
+@keyframes kenburns{from{transform:scale(1) translate(0,0)}to{transform:scale(1.07) translate(-1.2%,-0.8%)}}
+@keyframes slideProgress{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+/* Défilement accueil ↔ applis : chaque rangée part avec un léger retard sur la précédente. */
+/* Tuile sélectionnée : liseré lumineux (anneau masqué) et petit reflet sur le bord haut. En « Néon irisé », l’anneau arc-en-ciel tourne lentement. */
+.tile-rim{position:absolute;inset:0;border-radius:inherit;padding:2px;overflow:hidden;pointer-events:none;-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;transition:opacity 280ms ease}
+.tile-rim.neon{padding:3px}
+.tile-rim-rainbow{position:absolute;left:50%;top:50%;width:160%;aspect-ratio:1;transform:translate(-50%,-50%);background:conic-gradient(from 0deg,#FF2D95,#A23BFF,#2F6BFF,#00E5FF,#00FF9C,#FFE600,#FF7A00,#FF2D95)}
+.tile-rim-light{position:absolute;inset:0}
+@keyframes rimRotate{from{transform:translate(-50%,-50%) rotate(0deg)}to{transform:translate(-50%,-50%) rotate(360deg)}}
+/* Heure de l’écran de veille en SF Pro Compressed Medium, police installée sur l’ordi (rien n’est téléchargé ni intégré).
+   On essaie ses noms possibles ; sinon la version variable de SF Pro, resserrée au maximum ; sinon Inter. */
+@font-face{font-family:"Heure Veille";font-weight:100 900;src:local("SF Pro Compressed Medium"),local("SFProCompressed-Medium"),local("SF Pro Display Compressed Medium"),local("SFProDisplay-CompressedMedium"),local("SFPro-CompressedMedium"),local("SF Compressed Medium")}
+/* Heure en ABC Arizona Plus (version d’essai), figée sur tes réglages Illustrator : largeur 100, épaisseur 700, inclinaison 0, serif 52.
+   Fichier réduit aux chiffres et aux deux-points ; taille choisie pour que les chiffres tiennent sans déformation entre la date et les têtes. */
+@font-face{font-family:"Arizona Heure";src:url(assets/8e90b28a614eddbea6d85e4702f24467.woff2) format("woff2");font-weight:700;font-style:normal;font-display:block}
+.veille-chiffres.arizona{font-family:"Arizona Heure","ABC Arizona Plus Variable Unlicensed Trial","Inter",system-ui,sans-serif;font-size:468px;font-weight:700;letter-spacing:-0.01em;font-variant-numeric:normal;font-variation-settings:normal}
+.veille-chiffres{font-family:"Heure Veille","SF Pro","SF Pro Display","Inter",system-ui,sans-serif;font-size:446px;font-weight:500;letter-spacing:0;font-variant-numeric:tabular-nums;font-variation-settings:"wdth" 1}
+/* Écran de veille : chiffres en verre liquide. L’intérieur montre le fond grossi, flouté et éclairci (effet de lentille),
+   avec un biseau lumineux le long des bords (reflet net en haut à gauche, plus doux en bas à droite) et un fin liseré. */
+/* Veille : toute la scène dérive très lentement de quelques pixels (comme le décalage de pixels), pour ne jamais rester une image fixe sur l’OLED. */
+@keyframes veilleDerive{0%{transform:scale(1.02) translate(0,0)}25%{transform:scale(1.02) translate(-10px,-5px)}50%{transform:scale(1.02) translate(-3px,-10px)}75%{transform:scale(1.02) translate(8px,-4px)}100%{transform:scale(1.02) translate(0,0)}}
+/* Mode « modifier l’accueil » : les tuiles tremblent légèrement (décalées les unes des autres). */
+@keyframes tileWiggle{0%{rotate:-1.1deg}50%{rotate:1.1deg}100%{rotate:-1.1deg}}
+@keyframes editBarIn{from{opacity:0;transform:translateY(-14px) scale(0.96)}to{opacity:1;transform:none}}
+/* Rebond à la sélection : la tuile s’étire puis se tasse légèrement avant de se poser (s’ajoute à l’agrandissement). */
+@keyframes tileBounce{0%{scale:1 1}20%{scale:1.05 0.95}42%{scale:0.975 1.035}62%{scale:1.014 0.99}80%{scale:0.996 1.004}100%{scale:1 1}}
+.tile-flare{position:absolute;top:0;width:44%;height:2px;margin-left:-22%;pointer-events:none;border-radius:2px;background:linear-gradient(90deg,rgba(255,255,255,0),rgba(255,255,255,.95) 50%,rgba(255,255,255,0));box-shadow:0 0 10px 1px rgba(255,255,255,.55);transition:opacity 280ms ease,left 380ms cubic-bezier(0.25,1.4,0.5,1)}
+@keyframes rowUp{0%{translate:0 0}30%{translate:0 var(--lag, 0px)}100%{translate:0 0}}
+/* Retour vers l’accueil : les rangées du bas s’écartent du dock (au lieu de s’en rapprocher) puis se recalent. */
+@keyframes rowDown{0%{translate:0 0}30%{translate:0 var(--lag, 0px)}100%{translate:0 0}}
+/* Logos des services : même poids visuel quel que soit leur format (18 px de haut max, 96 px de large max). */
+.service-logo > svg,.service-logo > img{display:block !important;height:18px !important;width:auto !important;max-width:96px !important}
+.service-logo:has(> svg, > img) > .service-ph{display:none !important}
+/* Un logo collé sans couleur prend le blanc de la ligne « Sur ». */
+.service-logo > svg{fill:currentColor}
+/* Recos : hauteur de chaque logo calculée selon sa forme (h = 34,5 × ratio^-0,4, 100 px de large max) :
+   les logos allongés restent fins, les logos carrés montent un peu plus haut, pour un même poids visuel.
+   Petites corrections à l’œil : Apple TV un peu plus petit (très dense), Disney+ et Paramount+ un peu plus grands (traits fins). */
+.service-logo > svg.rl{max-width:none !important}
+.service-logo > svg.rl-netflix{height:20.5px !important}
+.service-logo > svg.rl-ps5{height:15px !important}
+.service-logo > svg.rl-appletv{height:24.5px !important}
+.service-logo > svg.rl-crunchyroll{height:17px !important}
+.service-logo > svg.rl-youtube{height:19px !important}
+.service-logo > svg.rl-switch{height:18.5px !important}
+.service-logo > svg.rl-disney{height:29px !important}
+.service-logo > svg.rl-paramount{height:30px !important}
+.service-logo > svg.rl-hbo{height:30px !important}
+.service-logo > svg.rl-canal{height:17.5px !important}
+.service-logo > svg.rl-prime{height:32px !important}
+.tile-art > svg:not(.ph-icon),.tile-art > img{position:absolute !important;left:var(--art-x, 0%);top:var(--art-y, 0%);display:block !important;width:var(--art-w, 100%) !important;height:var(--art-h, 100%) !important;max-width:none !important;object-fit:var(--art-fit, cover) !important;clip-path:var(--art-clip, none)}
+.tile-art:has(> svg:not(.ph-icon), > img){background:var(--art-bg, none)}
+button:has(.tile-art > svg:not(.ph-icon), .tile-art > img) .tile-art-ph{display:none !important}
+.logo-slot > svg:not(.ph-icon),.logo-slot > img{display:block !important;width:100% !important;height:auto !important}
+/* Un logo collé qui a perdu ses styles prend la couleur réglée sur son emplacement (ses propres couleurs, s’il en a, restent prioritaires). */
+.logo-slot > svg:not(.ph-icon){fill:currentColor}
+/* Logo en image passé en blanc uni (silhouette), pour un logo de la même couleur que le fond de sa tuile. */
+.logo-slot.mono > img{filter:brightness(0) invert(1)}
+.logo-slot:has(> svg:not(.ph-icon), > img) > .logo-ph{display:none !important}
+
+/* ---- Hub.dc.html ---- */
+body{margin:0;background:#05070E}
+button{font:inherit;color:inherit;border:0;margin:0;padding:0;cursor:pointer;-webkit-appearance:none;appearance:none}
+button:focus-visible{outline:3px solid #F5F5F7;outline-offset:6px}
+a{color:#F5F5F7}a:hover{color:#FFFFFF}
+@keyframes hubIn{from{opacity:0;transform:translateY(-16px) scale(0.96)}to{opacity:1;transform:none}}
+@keyframes tileIn{from{opacity:0;transform:translateY(-14px) scale(0.9)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+/* Rebond à la sélection (s’ajoute à l’agrandissement) et petit « pop » quand on appuie (deux noms pour pouvoir le rejouer à chaque appui). */
+@keyframes tileBounce{0%{scale:1 1}20%{scale:1.05 0.95}42%{scale:0.975 1.035}62%{scale:1.014 0.99}80%{scale:0.996 1.004}100%{scale:1 1}}
+@keyframes pressPopA{0%{scale:1}28%{scale:0.92}62%{scale:1.05}100%{scale:1}}
+@keyframes pressPopB{0%{scale:1}28%{scale:0.92}62%{scale:1.05}100%{scale:1}}
+/* Liquid glass : verre clair, liseré lumineux en dégradé (plus fort en haut à gauche) et reflet doux. --lg-fx coupe les effets (tuile sélectionnée, appareil débranché). */
+.lg{position:relative;isolation:isolate}
+.lg::before{content:"";position:absolute;inset:0;border-radius:inherit;padding:1.5px;background:linear-gradient(135deg,rgba(255,255,255,.75),rgba(255,255,255,.12) 32%,rgba(255,255,255,0) 58%,rgba(255,255,255,.32));-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;opacity:var(--lg-fx,1);transition:opacity 300ms ease;pointer-events:none}
+.lg::after{content:"";position:absolute;inset:0;border-radius:inherit;z-index:-1;background:radial-gradient(120% 90% at 22% 0%,rgba(255,255,255,.2),rgba(255,255,255,0) 55%);opacity:var(--lg-fx,1);transition:opacity 300ms ease;pointer-events:none}
+/* Dans le Hub, le verre réfracte légèrement ce qu’il y a derrière (déformation liquide). */
+.lg-refract{-webkit-backdrop-filter:blur(10px) saturate(185%) brightness(1.06);backdrop-filter:blur(10px) saturate(185%) brightness(1.06);backdrop-filter:url(#lg-refract) blur(6px) saturate(185%) brightness(1.06)}

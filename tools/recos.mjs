@@ -1,0 +1,393 @@
+// Prépare les recos de l’accueil : node tools/recos.mjs [fichier de sortie]
+//
+// Sources : ta liste et tes séries en cours (Serializd), ta watchlist, tes films vus et notés (Letterboxd),
+// le Top 10 officiel de Netflix en France, et TMDB pour les détails, les images, les bandes-annonces
+// et les plateformes où chaque titre est inclus dans l’abonnement (données JustWatch).
+// Il faut une clé TMDB dans la variable TMDB_TOKEN (jeton de lecture « eyJ… » ou clé d’API).
+// En option : YOUTUBE_KEY (nouvelles vidéos de tes abonnements) et RAWG_KEY (jeux RPG, indé et puzzle du moment).
+import fs from "node:fs";
+import path from "node:path";
+import * as L from "./recos-lib.mjs";
+
+const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");
+const cfg = JSON.parse(fs.readFileSync(process.env.RECOS_CONFIG || path.join(root, "launcher.config.json"), "utf8")).recos || {};
+const OUT = path.resolve(process.argv[2] || path.join(root, "dist/site/data/recos.json"));
+const CACHE = path.resolve(process.env.RECOS_CACHE || path.join(root, ".cache/recos-cache.json"));
+const TOKEN = (process.env.TMDB_TOKEN || "").trim();
+const REGION = cfg.region || "FR";
+const LANG = cfg.language || "fr-FR";
+const MINE = cfg.platforms || ["netflix", "prime", "appletv", "hbo", "crunchyroll"];
+const MAX = cfg.max || 12;
+const YT_KEY = (process.env.YOUTUBE_KEY || "").trim();
+const RAWG_KEY = (process.env.RAWG_KEY || "").trim();
+const YT = cfg.youtube || {};
+const GAMES = cfg.games || {};
+
+if (!TOKEN) {
+  console.log("Pas de clé TMDB (variable TMDB_TOKEN) : les recos ne sont pas générées, l’accueil garde ses exemples.");
+  process.exit(0);
+}
+
+const UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36";
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const log = (...a) => console.log(...a);
+
+async function get(url, opts = {}, tries = 3) {
+  let last;
+  for (let i = 0; i < tries; i++) {
+    try {
+      const r = await fetch(url, { ...opts, headers: { "User-Agent": UA, ...(opts.headers || {}) }, signal: AbortSignal.timeout(60000) });
+      if (r.status === 429 || r.status >= 500) { last = new Error(r.status + " " + url); await sleep(1500 * (i + 1)); continue; }
+      if (!r.ok) throw Object.assign(new Error(r.status + " " + url), { status: r.status });
+      return r;
+    } catch (e) {
+      last = e;
+      if (e.status && e.status < 500) break;
+      await sleep(800 * (i + 1));
+    }
+  }
+  throw last;
+}
+
+let cache = {};
+try { cache = JSON.parse(fs.readFileSync(CACHE, "utf8")); } catch (e) {}
+cache.lbFilms = cache.lbFilms || {};
+
+// ── Serializd ────────────────────────────────────────────────
+const SZ = "https://serializd.onrender.com/api/user/" + encodeURIComponent(cfg.serializd || "") + "/";
+const SZ_HEADERS = { Accept: "application/json, text/plain, */*", "X-Requested-With": "serializd_vercel" };
+
+async function szList(name, query) {
+  const out = [];
+  for (let page = 1; page <= 20; page++) {
+    const j = await (await get(SZ + name + "/" + page + query, { headers: SZ_HEADERS })).json();
+    out.push(...L.szItems(j));
+    if (page >= (j.totalPages || 1)) break;
+  }
+  return out;
+}
+
+async function serializd() {
+  if (!cfg.serializd) return { watchlist: [], watching: [], watched: [] };
+  try {
+    const q = "?sort_by=date_added_desc&filters=%7B%7D";
+    const data = {
+      watchlist: await szList("watchlistpage_v2", q),
+      watching: await szList("currently_watching_page", "?sort_by=date_added_desc"),
+      watched: await szList("watchedpage_v2", q)
+    };
+    cache.serializd = data;
+    log("Serializd :", data.watchlist.length, "dans ta liste,", data.watching.length, "en cours,", data.watched.length, "vues");
+    return data;
+  } catch (e) {
+    log("Serializd indisponible (" + e.message + ") : dernière version connue.");
+    return cache.serializd || { watchlist: [], watching: [], watched: [] };
+  }
+}
+
+// ── Letterboxd ───────────────────────────────────────────────
+const LB = "https://letterboxd.com/" + encodeURIComponent(cfg.letterboxd || "") + "/";
+
+async function lbPages(p) {
+  const out = [];
+  for (let page = 1; page <= 40; page++) {
+    const html = await (await get(LB + p + (page > 1 ? "page/" + page + "/" : ""))).text();
+    const items = L.lbPosters(html);
+    out.push(...items);
+    if (!items.length || !L.lbHasNext(html)) break;
+    await sleep(400);
+  }
+  return out;
+}
+
+async function lbTmdb(slug) {
+  if (cache.lbFilms[slug]) return cache.lbFilms[slug];
+  const html = await (await get("https://letterboxd.com/film/" + slug + "/")).text();
+  const t = L.lbFilmTmdb(html);
+  if (t) cache.lbFilms[slug] = t;
+  await sleep(350);
+  return t;
+}
+
+async function letterboxd() {
+  if (!cfg.letterboxd) return { watchlist: [], watched: [], diary: [] };
+  try {
+    const watchlist = await lbPages("watchlist/");
+    const watched = await lbPages("films/");
+    const diary = L.lbRss(await (await get(LB + "rss/")).text());
+    let fetched = 0;
+    for (const f of watchlist.concat(watched)) {
+      if (cache.lbFilms[f.slug] || fetched >= 250) continue;
+      try { await lbTmdb(f.slug); fetched++; } catch (e) {}
+    }
+    const withId = (list) => list.map((f) => Object.assign({}, f, cache.lbFilms[f.slug] || {})).filter((f) => f.tmdb);
+    const data = { watchlist: withId(watchlist), watched: withId(watched), diary };
+    cache.letterboxd = data;
+    log("Letterboxd :", data.watchlist.length, "dans ta watchlist,", data.watched.length, "films vus,", diary.length, "dans le journal");
+    return data;
+  } catch (e) {
+    log("Letterboxd indisponible (" + e.message + ") : dernière version connue.");
+    return cache.letterboxd || { watchlist: [], watched: [], diary: [] };
+  }
+}
+
+// ── TMDB ─────────────────────────────────────────────────────
+const TM = "https://api.themoviedb.org/3";
+const bearer = TOKEN.startsWith("eyJ");
+
+async function tm(p, params = {}) {
+  const u = new URL(TM + p);
+  for (const k of Object.keys(params)) u.searchParams.set(k, params[k]);
+  if (!bearer) u.searchParams.set("api_key", TOKEN);
+  return (await get(u, bearer ? { headers: { Authorization: "Bearer " + TOKEN, Accept: "application/json" } } : {})).json();
+}
+
+async function providerIds() {
+  const ids = {};
+  for (const kind of ["tv", "movie"]) {
+    const j = await tm("/watch/providers/" + kind, { watch_region: REGION, language: LANG });
+    for (const p of j.results || []) {
+      const app = L.appOfProvider(p.provider_name);
+      if (app && MINE.indexOf(app) >= 0) (ids[app] = ids[app] || new Set()).add(p.provider_id);
+    }
+  }
+  return ids;
+}
+
+async function details(kind, id) {
+  return tm("/" + kind + "/" + id, {
+    language: LANG,
+    append_to_response: "images,watch/providers,videos",
+    include_image_language: LANG.slice(0, 2) + ",en,null",
+    include_video_language: LANG.slice(0, 2) + ",en"
+  });
+}
+
+async function pool(items, n, fn) {
+  const out = new Array(items.length);
+  let i = 0;
+  await Promise.all(Array.from({ length: n }, async () => {
+    while (i < items.length) {
+      const k = i++;
+      try { out[k] = await fn(items[k]); } catch (e) { out[k] = null; }
+    }
+  }));
+  return out;
+}
+
+// ── YouTube : nouvelles vidéos de tes abonnements ───────────
+// Abonnements lus avec la clé YOUTUBE_KEY (ils doivent être publics sur ta chaîne), ou liste fixe dans launcher.config.json.
+// Les vidéos viennent ensuite des flux RSS des chaînes (gratuits, sans quota).
+async function youtube() {
+  let channels = (YT.channels || []).slice();
+  if (YT_KEY && YT.channelId) {
+    try {
+      let pageToken = "";
+      for (let n = 0; n < 4; n++) {
+        const u = new URL("https://www.googleapis.com/youtube/v3/subscriptions");
+        u.search = new URLSearchParams({ part: "snippet", channelId: YT.channelId, maxResults: "50", order: "relevance", key: YT_KEY, ...(pageToken ? { pageToken } : {}) });
+        const j = await (await get(u)).json();
+        (j.items || []).forEach((it) => { const id = it.snippet && it.snippet.resourceId && it.snippet.resourceId.channelId; if (id && channels.indexOf(id) < 0) channels.push(id); });
+        if (!j.nextPageToken) break;
+        pageToken = j.nextPageToken;
+      }
+      cache.ytChannels = channels;
+    } catch (e) {
+      log("Abonnements YouTube indisponibles (" + e.message + ") : dernière liste connue.");
+      channels = cache.ytChannels || channels;
+    }
+  }
+  if (!channels.length) return [];
+  const since = Date.now() - (YT.days || 10) * 86400000;
+  const feeds = await pool(channels.slice(0, YT.channelsMax || 40), 6, async (id) => L.ytFeed(await (await get("https://www.youtube.com/feeds/videos.xml?channel_id=" + id)).text()));
+  const vids = [];
+  feeds.forEach((list, rank) => (list || []).forEach((v) => {
+    const t = Date.parse(v.published);
+    if (!v.short && t >= since) vids.push(Object.assign(v, { rank, age: (Date.now() - t) / 86400000 }));
+  }));
+  // Les plus récentes des chaînes que tu regardes le plus (ordre de pertinence de YouTube), une par chaîne.
+  vids.sort((a, b) => (a.rank * 0.6 + a.age * 2) - (b.rank * 0.6 + b.age * 2));
+  const seenCh = new Set();
+  const out = [];
+  for (const v of vids) {
+    if (seenCh.has(v.channel) || out.length >= (YT.max || 3)) continue;
+    seenCh.add(v.channel);
+    let img = "https://i.ytimg.com/vi/" + v.id + "/maxresdefault.jpg";
+    try { await get(img, { method: "HEAD" }, 1); } catch (e) { img = "https://i.ytimg.com/vi/" + v.id + "/hqdefault.jpg"; }
+    const date = new Date(v.published).toLocaleDateString("fr-FR", { day: "numeric", month: "long" });
+    out.push({
+      key: "video:" + v.id, kind: "video", app: "youtube", signals: [{ type: "video", reason: "Nouvelle vidéo de " + v.channel, bonus: Math.max(0, 8 - Math.round(v.age)) }],
+      out: { id: "video:" + v.id, kind: "video", video: v.id, title: v.title, app: "youtube", platform: "YouTube", reason: "Nouvelle vidéo de " + v.channel,
+        detail: "Vidéo · " + v.channel + " · " + date, overview: "", backdrop: img, thumb: "https://i.ytimg.com/vi/" + v.id + "/mqdefault.jpg", logo: null, trailer: null }
+    });
+  }
+  log("YouTube :", channels.length, "chaînes,", vids.length, "vidéos récentes,", out.length, "retenues");
+  return out;
+}
+
+// ── Jeux : RPG, indé et puzzle du moment sur PS5 et Switch (RAWG) ─
+async function games() {
+  if (!RAWG_KEY) return [];
+  const today = new Date();
+  const from = new Date(today.getTime() - (GAMES.days || 150) * 86400000).toISOString().slice(0, 10);
+  const to = new Date(today.getTime() + 30 * 86400000).toISOString().slice(0, 10);
+  const kinds = [
+    { genres: "role-playing-games-rpg", reason: "Tendance RPG", n: 2 },
+    { genres: "indie", reason: "Pépite indé du moment", n: 1 },
+    { genres: "puzzle", reason: "Puzzle du moment", n: 1 }
+  ];
+  const out = [];
+  const taken = new Set();
+  for (const k of kinds) {
+    try {
+      const u = new URL("https://api.rawg.io/api/games");
+      u.search = new URLSearchParams({ key: RAWG_KEY, genres: k.genres, platforms: "187,7", dates: from + "," + to, ordering: "-added", page_size: "20" });
+      const list = L.rawgGames(await (await get(u)).json());
+      let n = 0;
+      for (const g of list) {
+        if (n >= k.n || taken.has(g.id)) continue;
+        taken.add(g.id);
+        n++;
+        const app = g.ps5 ? "ps5" : "switch";
+        const detail = ["Jeu", app === "ps5" ? "PS5" : "Switch", g.released ? g.released.slice(0, 4) : null, g.genres[0] || null].filter(Boolean).join(" · ");
+        out.push({
+          key: "game:" + g.id, kind: "game", app, signals: [{ type: "game", reason: k.reason, bonus: Math.max(0, 6 - n * 2) }],
+          out: { id: "game:" + g.id, kind: "game", title: g.title, app, platform: app === "ps5" ? "PS5" : "Nintendo Switch", reason: k.reason, detail,
+            overview: "", backdrop: L.rawgImage(g.image, 1920), thumb: L.rawgImage(g.image, 640), logo: null, trailer: null }
+        });
+      }
+    } catch (e) {
+      log("Jeux (" + k.genres + ") indisponibles : " + e.message);
+    }
+  }
+  log("Jeux :", out.length, "retenus");
+  return out;
+}
+
+// ── Assemblage ───────────────────────────────────────────────
+async function main() {
+  const [sz, lb] = [await serializd(), await letterboxd()];
+  const cands = new Map();
+  const add = (kind, id, signal) => L.addSignal(cands, kind, id, signal);
+
+  // Déjà vu : jamais recommandé (sauf une série en cours).
+  const seen = new Set();
+  sz.watched.forEach((s) => seen.add("tv:" + s.tmdb));
+  lb.watched.forEach((f) => seen.add((f.type === "tv" ? "tv:" : "movie:") + f.tmdb));
+  lb.diary.forEach((f) => seen.add("movie:" + f.tmdb));
+
+  sz.watching.forEach((s, i) => add("tv", s.tmdb, { type: "resume", reason: "Reprendre", bonus: Math.max(0, 6 - i) }));
+  sz.watchlist.forEach((s, i) => add("tv", s.tmdb, { type: "list", reason: "Dans ta liste", bonus: Math.max(0, 8 - i) }));
+  lb.watchlist.forEach((f, i) => add(f.type === "tv" ? "tv" : "movie", f.tmdb, { type: "list", reason: "Dans ta liste", bonus: Math.max(0, 8 - i) }));
+
+  // Proches de ce que tu as aimé : films notés 4/5 ou plus (ou aimés), séries en cours et dernières séries vues.
+  const seeds = [];
+  lb.diary.filter((f) => f.like || (f.rating || 0) >= 4).slice(0, 6).forEach((f) => seeds.push({ kind: "movie", id: f.tmdb, title: f.title }));
+  sz.watching.slice(0, 4).forEach((s) => seeds.push({ kind: "tv", id: s.tmdb, title: s.title }));
+  sz.watched.slice(0, 3).forEach((s) => seeds.push({ kind: "tv", id: s.tmdb, title: s.title }));
+  await pool(seeds, 4, async (s) => {
+    const j = await tm("/" + s.kind + "/" + s.id + "/recommendations", { language: LANG });
+    (j.results || []).slice(0, 8).forEach((r, i) => add(s.kind, r.id, { type: "similar", reason: "Parce que tu as aimé " + s.title, bonus: Math.max(0, 6 - i) }));
+  });
+
+  // Tendances sur tes plateformes, en France.
+  const prov = await providerIds();
+  const provList = [].concat(...Object.values(prov).map((s) => [...s])).join("|");
+  if (provList) {
+    for (const kind of ["tv", "movie"]) {
+      const j = await tm("/discover/" + kind, {
+        language: LANG, watch_region: REGION, with_watch_providers: provList,
+        with_watch_monetization_types: "flatrate", sort_by: "popularity.desc", "vote_count.gte": kind === "tv" ? 50 : 150
+      });
+      (j.results || []).slice(0, 20).forEach((r, i) => add(kind, r.id, { type: "trend", reason: "Tendance", bonus: Math.max(0, 8 - Math.floor(i / 2)) }));
+    }
+  }
+
+  // Top 10 officiel de Netflix en France (titres en anglais, retrouvés sur TMDB).
+  if (MINE.indexOf("netflix") >= 0) {
+    try {
+      const tsv = await (await get("https://www.netflix.com/tudum/top10/data/all-weeks-countries.tsv")).text();
+      const top = L.netflixTop10(tsv, REGION);
+      await pool(top, 4, async (t) => {
+        const j = await tm("/search/" + t.kind, { query: t.title, language: "en-US" });
+        const hit = (j.results || [])[0];
+        if (hit) add(t.kind, hit.id, { type: "top10", reason: "N°" + t.rank + " en France sur Netflix", bonus: 10 - t.rank, app: "netflix" });
+      });
+      log("Top 10 Netflix :", top.length, "titres (semaine du " + (top[0] ? top[0].week : "?") + ")");
+    } catch (e) {
+      log("Top 10 Netflix indisponible (" + e.message + ")");
+    }
+  }
+
+  // Détails, images et plateformes de chaque candidat ; on ne garde que ce qui est inclus dans tes abonnements.
+  const list = [...cands.values()].filter((c) => !seen.has(c.key) || c.signals.some((s) => s.type === "resume"));
+  log("Candidats :", list.length);
+  const got = await pool(list, 6, (c) => details(c.kind, c.tmdb));
+  const ok = [];
+  list.forEach((c, i) => {
+    const d = got[i];
+    if (!d || !d.id) return;
+    const apps = L.appsFor(d, REGION, MINE);
+    if (!apps.length) return;
+    const wanted = c.signals.find((s) => s.app && apps.indexOf(s.app) >= 0);
+    c.details = d;
+    c.app = wanted ? wanted.app : apps[0];
+    ok.push(c);
+  });
+
+  // Tes goûts : genres de ta liste et de tes séries en cours.
+  const taste = {};
+  ok.filter((c) => c.signals.some((s) => s.type === "list" || s.type === "resume")).forEach((c) => {
+    (c.details.genres || []).forEach((g) => { taste[g.id] = (taste[g.id] || 0) + 1; });
+  });
+  const top = Math.max(1, ...Object.values(taste));
+  Object.keys(taste).forEach((k) => { taste[k] = (taste[k] / top) * 3; });
+
+  const extra = (await youtube()).concat(await games());
+  ok.forEach((c) => { c.score = L.score(c, taste); });
+  extra.forEach((c) => { c.score = L.score(c, {}); });
+  const chosen = L.pick(ok.concat(extra), MAX);
+
+  const items = chosen.map((c) => {
+    if (c.out) return Object.assign({ score: Math.round(c.score) }, c.out);
+    const d = c.details;
+    const img = L.imagesFor(d, LANG);
+    const trailer = ((d.videos && d.videos.results) || []).find((v) => v.site === "YouTube" && v.type === "Trailer");
+    let reason = L.reasonOf(c);
+    if (reason === "Tendance") reason = "Tendance sur " + L.PLATFORM_NAMES[c.app];
+    return {
+      id: c.key,
+      kind: c.kind,
+      tmdb: c.tmdb,
+      title: d.name || d.title,
+      app: c.app,
+      platform: L.PLATFORM_NAMES[c.app],
+      reason,
+      detail: L.detailLine(c.kind, d),
+      overview: (d.overview || "").length > 240 ? d.overview.slice(0, 237).replace(/\s+\S*$/, "") + "…" : (d.overview || ""),
+      backdrop: img.backdrop,
+      thumb: img.thumb,
+      logo: img.logo,
+      trailer: trailer ? trailer.key : null,
+      score: Math.round(c.score)
+    };
+  }).filter((it) => it.backdrop);
+
+  const out = {
+    generatedAt: new Date().toISOString(),
+    region: REGION,
+    items,
+    credits: "Données et images : TMDB (ce produit utilise l’API TMDB mais n’est ni approuvé ni certifié par TMDB). Disponibilités : JustWatch." + (RAWG_KEY ? " Jeux : RAWG (rawg.io)." : "") + (extra.some((c) => c.kind === "video") ? " Vidéos : YouTube." : "")
+  };
+  fs.mkdirSync(path.dirname(OUT), { recursive: true });
+  fs.writeFileSync(OUT, JSON.stringify(out, null, 1));
+  fs.mkdirSync(path.dirname(CACHE), { recursive: true });
+  fs.writeFileSync(CACHE, JSON.stringify(cache));
+  log("Recos :", items.length, "→", path.relative(root, OUT));
+  items.slice(0, 6).forEach((it, i) => log("  " + (i + 1) + ". " + it.title + " — " + it.reason + " · " + it.platform + " (" + it.score + ")"));
+}
+
+main().catch((e) => {
+  console.error("Recos non générées :", e.message);
+  process.exit(0);
+});

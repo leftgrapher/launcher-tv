@@ -1,0 +1,47 @@
+# Met le launcher en ligne (GitHub Pages) à chaque envoi sur « main », et rafraîchit les recos toutes les 6 heures.
+# La TV récupère tout seule le nouveau code et les nouvelles recos.
+name: Mise en ligne
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "17 */6 * * *"
+  workflow_dispatch:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: pages
+  cancel-in-progress: false
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --no-audit --no-fund
+      - run: node build.mjs
+      # Mémoire entre deux passages (identifiants TMDB des films Letterboxd, dernières listes connues).
+      - uses: actions/cache@v4
+        with:
+          path: .cache
+          key: recos-${{ github.run_id }}
+          restore-keys: recos-
+      - name: Recos (Serializd, Letterboxd, Top 10 Netflix, TMDB, YouTube, jeux)
+        run: node tools/recos.mjs dist/site/data/recos.json
+        env:
+          TMDB_TOKEN: ${{ secrets.TMDB_TOKEN }}
+          YOUTUBE_KEY: ${{ secrets.YOUTUBE_KEY }}
+          RAWG_KEY: ${{ secrets.RAWG_KEY }}
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist/site
+      - id: deployment
+        uses: actions/deploy-pages@v4
