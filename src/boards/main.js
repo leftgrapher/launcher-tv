@@ -405,6 +405,7 @@ ${(c?.hasImg) ? html`
 <div role="group" aria-label="Applications" style="position: absolute; inset: 0; pointer-events: none">
 ${(v?.tiles || []).map((item, $index) => html`
 <div style="position: absolute; left: 0; top: 0; z-index: ${item?.z}; transform: translate3d(${item?.x}, ${item?.y}, 0); transition: ${item?.posTransition}; --lag: ${item?.rowLag}; animation: ${item?.rowAnim}; will-change: transform; pointer-events: none">
+<span aria-hidden="true" style="position: absolute; left: 0; top: 0; width: ${item?.w}; height: 161px; border-radius: 22px; box-shadow: ${item?.glow}; opacity: ${item?.glowOn}; transform: scale(${item?.glowScale}); transition: ${item?.glowTransition}; will-change: opacity, transform; pointer-events: none"></span>
 <button type="button" data-tile="${item?.id}" aria-label="${item?.label}" onClick="${item?.open}" onFocus="${item?.pick}" onMouseEnter="${item?.pick}" onMouseMove="${item?.move}" onMouseLeave="${item?.leave}" onMouseDown="${item?.down}" onMouseUp="${item?.up}" style="position: relative; width: ${item?.w}; height: 161px; overflow: hidden; border-radius: 22px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; background: ${item?.bg}; background-origin: border-box; background-repeat: no-repeat; color: ${item?.fg}; border: 1px solid ${item?.border}; transform: ${item?.transform}; box-shadow: ${item?.shadow}; opacity: ${item?.opacity}; transition: ${item?.tileTransition}; animation: ${item?.bounce}; scale: ${item?.lift}; will-change: transform; pointer-events: auto">
 <span aria-hidden="true" style="position: absolute; inset: 0; pointer-events: none; opacity: ${item?.sheen}; background: ${item?.sheenBg}; transition: opacity 240ms ease"></span>
 ${(item?.isPs5) ? html`
@@ -1891,7 +1892,15 @@ class Component extends DCLogic {
       t.lift = carried ? "1.12" : "1";
       if (carried) t.z = "3";
       t.tileTransition = t.tileTransition + (motion ? ", scale 320ms cubic-bezier(0.34, 1.5, 0.5, 1)" : "");
-      t.hasBadge = !!it.badge;
+      // Halo : les grandes ombres colorées passent sur un calque à part (allumé ou éteint), la tuile garde seulement ses reflets.
+      // Recalculer de grosses ombres floues à chaque image est ce qui coûte le plus cher sur la TV.
+      const splitSh = (v) => String(v || "").split(/,(?![^(]*\))/).map((x) => x.trim()).filter(Boolean);
+      const onSh = selFx(it, true).shadow || ((it.source || it.tint) ? dark(true, it.tint, it.ink).shadow : look(true, it.installed).shadow);
+      t.glow = splitSh(onSh).filter((x) => !/^inset/.test(x)).join(", ") || "none";
+      t.glowOn = on ? "1" : "0";
+      t.glowScale = on ? (pressed ? "1.02" : (motion ? "1.08" : "1.04")) : "1";
+      t.glowTransition = motion ? "opacity 300ms ease, transform 380ms " + spring : "opacity 160ms ease";
+      if (on) t.shadow = splitSh(t.shadow).filter((x) => /^inset/.test(x)).join(", ") || "none";
       t.badgeBg = on ? "rgba(11, 12, 15, 0.08)" : "rgba(11, 12, 15, 0.06)";
       t.badgeFg = "#3C3E47";
       return t;

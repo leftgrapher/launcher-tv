@@ -45,6 +45,9 @@ const PERF_CSS = `
 [style*="blur(36px)"]{background-color:rgba(18,20,28,.97)!important}
 .lg-refract{filter:none!important}
 .tile-rim-rainbow{animation:none!important}
+[data-tile]{will-change:auto!important}
+@keyframes heroIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+@keyframes heroIn2{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
 `;
 const PERF = cfg.perf != null ? !!cfg.perf : onTV;
 
@@ -112,7 +115,8 @@ class App extends Component {
     window.addEventListener("launcher:toast", this._onToast);
     // Journal de diagnostic (lancement des applis, entrées HDMI) : touche « i » au clavier, ou Info sur la télécommande.
     this._onKey = (e) => {
-      if (e.key === "i" || e.keyCode === 457) {
+      // « i » au clavier, Info (457) ou Lecture/Pause (10252) sur la télécommande Solar de la S95F, qui n’a pas de touche Info.
+      if (e.key === "i" || e.keyCode === 457 || e.keyCode === 10252 || e.key === "MediaPlayPause") {
         const on = !this.state.log;
         this.setState({ log: on });
         if (on) {
@@ -182,7 +186,7 @@ function start() {
   injectCss();
   measureFps();
   // Touche Info de la télécommande (journal de diagnostic).
-  try { if (onTV && window.tizen.tvinputdevice) window.tizen.tvinputdevice.registerKey("Info"); } catch (e) {}
+  ["Info", "MediaPlayPause"].forEach((k) => { try { if (onTV && window.tizen.tvinputdevice) window.tizen.tvinputdevice.registerKey(k); } catch (e) {} });
   let root = document.getElementById("launcher");
   if (!root) {
     root = document.createElement("div");
