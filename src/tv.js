@@ -49,13 +49,44 @@ function save(key, value) {
 
 export const store = { load, save };
 
+export const log = [];
+export function note(msg) {
+  log.push(new Date().toLocaleTimeString("fr-FR") + " " + msg);
+  if (log.length > 60) log.shift();
+}
+
+// Une réponse de la TV qui n’arrive jamais ne doit pas bloquer le launcher : chaque appel a un délai maximum.
+function withTimeout(p, ms, label) {
+  return new Promise((res, rej) => {
+    const t = setTimeout(() => rej(new Error(label + " : pas de réponse")), ms);
+    p.then((v) => { clearTimeout(t); res(v); }, (e) => { clearTimeout(t); rej(e); });
+  });
+}
+
 let installed = null;
+let installedErr = null;
 function apps() {
   if (installed) return installed;
-  installed = new Promise((res) => {
-    try { T.application.getAppsInfo((list) => res(list || []), () => res([])); } catch (e) { res([]); }
+  installed = withTimeout(new Promise((res, rej) => {
+    try { T.application.getAppsInfo((list) => res(list || []), rej); } catch (e) { rej(e); }
+  }), 4000, "liste des applis").catch((e) => {
+    installedErr = (e && (e.name || "") + " " + (e.message || "")).trim();
+    note("liste des applis indisponible : " + installedErr);
+    installed = null;
+    return [];
   });
   return installed;
+}
+
+// Pour le panneau Info : ce que la TV permet et ce qu’elle voit.
+export async function diagnostics() {
+  const out = { tizen: !!T, application: !!(T && T.application), apps: null, names: [] };
+  if (!onTV) return out;
+  const list = await apps();
+  out.apps = list.length;
+  out.appsError = installedErr;
+  out.names = list.filter((a) => a.show !== false).map((a) => a.name + " = " + a.id).slice(0, 40);
+  return out;
 }
 
 // Identifiants à essayer pour une appli du launcher, du plus probable au moins probable.
@@ -81,21 +112,17 @@ async function candidates(key) {
 }
 
 function launchId(id) {
-  return new Promise((res, rej) => {
+  return withTimeout(new Promise((res, rej) => {
     try { T.application.launch(id, res, rej); } catch (e) { rej(e); }
-  });
+  }), 6000, "ouverture de " + id);
 }
 
-export const log = [];
-function note(msg) {
-  log.push(new Date().toISOString().slice(11, 19) + " " + msg);
-  if (log.length > 60) log.shift();
-}
 
 // Lance une appli du launcher. Renvoie true si la TV l’a ouverte.
 export async function launchApp(key) {
-  if (!onTV) return false;
+  if (!onTV) { note("pas d’API Tizen : " + key + " simulé"); return false; }
   const ids = await candidates(key);
+  note(key + " : " + (ids.length ? ids.join(", ") : "aucun identifiant connu"));
   for (const id of ids) {
     try {
       await launchId(id);
@@ -104,7 +131,7 @@ export async function launchApp(key) {
       note("ouvert " + key + " → " + id);
       return true;
     } catch (e) {
-      note("échec " + key + " → " + id + " : " + (e && (e.name || e.message)));
+      note("échec " + key + " → " + id + " : " + (e && ((e.name || "") + " " + (e.message || "")).trim()));
     }
   }
   return false;
@@ -115,11 +142,11 @@ export async function launchApp(key) {
 export async function showSource(n) {
   if (!onTV) return false;
   try {
-    const info = await new Promise((res, rej) => T.systeminfo.getPropertyValue("VIDEOSOURCE", res, rej));
+    const info = await withTimeout(new Promise((res, rej) => T.systeminfo.getPropertyValue("VIDEOSOURCE", res, rej)), 4000, "sources");
     const all = (info.connected || []).concat(info.disconnected || []);
     const src = all.find((s) => s.type === "HDMI" && s.number === n);
     if (!src) throw new Error("HDMI " + n + " introuvable");
-    await new Promise((res, rej) => T.tvwindow.setSource(src, res, rej, "MAIN"));
+    await withTimeout(new Promise((res, rej) => T.tvwindow.setSource(src, res, rej, "MAIN")), 4000, "HDMI");
     T.application.getCurrentApplication().hide();
     note("source HDMI " + n);
     return true;

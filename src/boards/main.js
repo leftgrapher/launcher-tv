@@ -1690,7 +1690,10 @@ class Component extends DCLogic {
       title: cur.title, logo: cur.logo || "", hasLogo: !!cur.logo, noLogo: !cur.logo,
       reason: cur.reason || "", detail: cur.detail || "", hasReason: !!(cur.reason || cur.detail)
     };
-    const heroBgs = reprise.map((r, i) => ({ has: !!r.backdrop, src: r.backdrop || "", opacity: i === idx ? "1" : "0" }));
+    // Seulement l’image affichée, la précédente (pour le fondu) et la suivante (préchargée) : les autres ne prennent pas de mémoire.
+    if (this._heroIdx !== idx) { this._heroPrev = this._heroIdx; this._heroIdx = idx; }
+    const keepBg = (i) => i === idx || i === this._heroPrev || i === (idx + 1) % reprise.length;
+    const heroBgs = reprise.map((r, i) => ({ has: !!r.backdrop && keepBg(i), src: r.backdrop || "", opacity: i === idx ? "1" : "0" }));
 
     // Tuile à fond de marque uni (PS5, Switch, YouTube, Netflix, Apple TV, HBO Max, Spotify, Prime Video, Crunchyroll, Disney+ en dégradé) : le fond porte la couleur, le logo est centré.
     const dark = (on, tint, ink) => ({

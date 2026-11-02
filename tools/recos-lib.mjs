@@ -178,15 +178,17 @@ const IMG = "https://image.tmdb.org/t/p/";
 export function imagesFor(d, lang) {
   const imgs = d.images || {};
   const byVotes = (a, b) => (b.vote_average || 0) - (a.vote_average || 0) || (b.width || 0) - (a.width || 0);
+  // La TV affiche en 1920×1080 : une image 4K pèse 4 fois plus en mémoire pour rien. On vise la taille Full HD.
   const backs = (imgs.backdrops || []).filter((b) => b.width >= 1280);
-  const textless = backs.filter((b) => !b.iso_639_1).sort(byVotes)[0];
-  const back = textless || backs.sort(byVotes)[0];
+  const pickBest = (list) => list.filter((b) => b.width <= 2560).sort(byVotes)[0] || list.sort(byVotes)[0];
+  const back = pickBest(backs.filter((b) => !b.iso_639_1)) || pickBest(backs);
   const backPath = back ? back.file_path : d.backdrop_path;
+  const heroSize = back && back.width > 2560 ? "w1280" : "original";
   const short = (lang || "fr").slice(0, 2);
   const logos = (imgs.logos || []).filter((l) => /\.png$/i.test(l.file_path));
   const logo = logos.filter((l) => l.iso_639_1 === short).sort(byVotes)[0] || logos.filter((l) => l.iso_639_1 === "en").sort(byVotes)[0];
   return {
-    backdrop: backPath ? IMG + "original" + backPath : null,
+    backdrop: backPath ? IMG + (back ? heroSize : "w1280") + backPath : null,
     thumb: backPath ? IMG + "w780" + backPath : null,
     logo: logo ? IMG + "w500" + logo.file_path : null
   };
