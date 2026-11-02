@@ -8,7 +8,7 @@ export const onTV = !!(T && T.application);
 
 // Applis du launcher → identifiants Tizen connus (appli ou paquet) et nom à chercher parmi les applis installées.
 const APPS = {
-  youtube: { ids: [], name: /tizen ?brew|tizentube/i },              // TizenTube passe par TizenBrew
+  youtube: { ids: [], name: /tizen ?brew|tizentube/i },              // TizenTube passe par TizenBrew (l’appli, pas son service)
   youtubeapp: { ids: ["com.samsung.tv.cobalt-yt", "111299001912", "9Ur5IzDKqV.TizenYouTube"], name: /^youtube$/i },
   netflix: { ids: ["org.tizen.netflix-app", "3201907018807", "11101200001"], name: /netflix/i },
   appletv: { ids: ["com.samsung.tv.aria-video", "3201807016597"], name: /apple ?tv/i },
@@ -20,7 +20,7 @@ const APPS = {
   freetv: { ids: [], name: /free ?tv|oqee/i },
   paramount: { ids: ["rJyOSqC6Up.CBSAllAccess", "3202110025305", "3201710014981"], name: /paramount/i },
   canal: { ids: ["3201606009910"], name: /canal/i },
-  hue: { ids: [], name: /hue/i },
+  hue: { ids: [], name: /hue sync|philips hue|^hue$/i },
   smartthings: { ids: ["com.samsung.tv.coba.smartthings", "3202311033054", "3201910019378", "3201710015016"], name: /smartthings/i },
   // Applis système (souvent cachées de la liste) : lancées directement par leur identifiant.
   store: { ids: ["com.samsung.tv.store", "org.volt.apps"], name: null },
@@ -90,24 +90,38 @@ export async function diagnostics() {
 }
 
 // Identifiants à essayer pour une appli du launcher, du plus probable au moins probable.
+// La TV liste aussi des « coquilles » d’applis pas encore téléchargées (…-dummy) et des services en arrière-plan
+// (…Service) qu’on ne peut pas ouvrir : on passe d’abord par les vraies applis visibles, les coquilles en dernier.
+const isDummy = (a) => /dummy/i.test(a.id || "");
+const isService = (a) => /service$/i.test(a.id || "") || /\bservice\b/i.test(a.name || "");
+const usable = (a) => !isDummy(a) && !isService(a);
+
 async function candidates(key) {
   const def = APPS[key];
   if (!def) return [];
   const memo = load(MEMO_KEY, {});
   const out = [];
   const add = (id) => { if (id && out.indexOf(id) < 0) out.push(id); };
-  add(memo[key]);
   const list = await apps();
+  const byId = (id) => list.find((a) => a.id === id);
+  // Ce qui a déjà marché, sauf si c’était une coquille ou un service.
+  const remembered = memo[key] ? byId(memo[key]) || { id: memo[key] } : null;
+  if (remembered && usable(remembered)) add(remembered.id);
+  // Identifiants connus : correspondance exacte d’abord, puis par paquet, en écartant coquilles et services.
   for (const known of def.ids) {
-    const hit = list.find((a) => a.id === known || a.packageId === known);
-    if (hit) add(hit.id);
+    const exact = byId(known);
+    if (exact && usable(exact)) add(exact.id);
+    list.filter((a) => a.packageId === known && usable(a)).forEach((a) => add(a.id));
   }
+  // Recherche par nom parmi les applis visibles dans la barre Samsung, puis toutes.
   if (def.name) {
-    const hit = list.find((a) => def.name.test(a.name || ""));
-    if (hit) add(hit.id);
+    const named = list.filter((a) => def.name.test(a.name || "") && usable(a));
+    named.filter((a) => a.show !== false).concat(named).forEach((a) => add(a.id));
   }
   // Applis système ou liste incomplète : on tente quand même les identifiants connus.
-  def.ids.forEach(add);
+  def.ids.forEach((id) => { if (!/dummy/i.test(id)) add(id); });
+  // En tout dernier, la coquille : elle ouvre en général le téléchargement de l’appli.
+  list.filter((a) => isDummy(a) && def.ids.some((k) => a.packageId === k || a.id === k || (def.name && def.name.test(a.name || "")))).forEach((a) => add(a.id));
   return out;
 }
 
@@ -127,7 +141,8 @@ export async function launchApp(key) {
     try {
       await launchId(id);
       const memo = load(MEMO_KEY, {});
-      if (memo[key] !== id) { memo[key] = id; save(MEMO_KEY, memo); }
+      if (memo[key] !== id && !/dummy|service$/i.test(id)) { memo[key] = id; save(MEMO_KEY, memo); }
+      if (/dummy/i.test(id)) note(key + " : appli pas encore installée sur la TV (Samsung ouvre son téléchargement)");
       note("ouvert " + key + " → " + id);
       return true;
     } catch (e) {
