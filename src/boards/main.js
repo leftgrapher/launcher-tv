@@ -621,6 +621,9 @@ ${(item?.hasPeek) ? html`
 <path d="M0 730 C 260 680, 480 710, 700 670 S 1080 635, 1320 690 S 1700 750, 1920 695 V1080 H0 Z" style="fill: ${item?.pk?.r3}"></path>
 <path d="M0 860 C 300 820, 560 850, 860 810 S 1400 790, 1920 840 V1080 H0 Z" style="fill: ${item?.pk?.r4}"></path>
 </svg>
+${(item?.hasPeekImg) ? html`
+<img aria-hidden="true" alt="" src="${item?.peekImg}" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transform-origin: 62% 48%; animation: ${item?.peekAnim}" />
+` : null}
 <span style="position: absolute; inset: 0; background: linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0) 38%)"></span>
 </span>
 ` : null}
@@ -1732,12 +1735,19 @@ class Component extends DCLogic {
       prime: "ocean", disney: "glacier", crunchyroll: "crepuscule", spotify: "foret", switch: "braise",
       paramount: "glacier", canal: "crepuscule", youtubeapp: "foret"
     };
+    // Aperçu dans la tuile : l’image d’une reco de cette appli quand les vraies recos sont là (sinon rien) ;
+    // dans la maquette, un paysage d’attente.
+    const recosReelles = Array.isArray(this.props.recos) && this.props.recos.length > 0;
     const peekFields = (it, inDock) => {
+      const rec = recosReelles ? toutesLesRecos.find((r) => r.app === it.id && (r.thumb || r.backdrop)) : null;
       const sc = it.installed === false ? null : peekScenes[it.id];
-      const on = !!sc && inDock && view === "home" && peekId === it.id;
+      const has = recosReelles ? !!rec : !!sc;
+      const on = has && inDock && view === "home" && peekId === it.id;
       const pk = scenes[sc || "crepuscule"];
       return {
-        hasPeek: !!sc,
+        hasPeek: has,
+        hasPeekImg: !!rec,
+        peekImg: rec ? (rec.thumb || rec.backdrop) : "",
         peekOpacity: on ? "1" : "0",
         peekAnim: on && motion ? "kenburns 14s ease-in-out infinite alternate" : "none",
         pk: Object.assign({}, pk, { glowA: pk.glow + "8C" })

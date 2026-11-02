@@ -137,7 +137,7 @@ export async function launchApp(key) {
   return false;
 }
 
-// Bascule la TV sur une entrée HDMI, puis s’efface pour laisser l’image de la source (mode jeu, VRR… restent ceux de la TV).
+// Bascule la TV sur une entrée HDMI, puis ouvre l’écran TV de Samsung sur cette source (mode jeu, VRR… restent ceux de la TV).
 // Si la TV refuse, on ouvre le menu Sources de Samsung.
 export async function showSource(n) {
   if (!onTV) return false;
@@ -147,8 +147,15 @@ export async function showSource(n) {
     const src = all.find((s) => s.type === "HDMI" && s.number === n);
     if (!src) throw new Error("HDMI " + n + " introuvable");
     await withTimeout(new Promise((res, rej) => T.tvwindow.setSource(src, res, rej, "MAIN")), 4000, "HDMI");
-    T.application.getCurrentApplication().hide();
-    note("source HDMI " + n);
+    note("source HDMI " + n + " choisie");
+    // Puis on ouvre l’écran TV de Samsung, qui affiche la source choisie (comme les autres launchers Tizen).
+    try {
+      await launchId("org.tizen.tv-viewer");
+      note("écran TV ouvert sur HDMI " + n);
+    } catch (e) {
+      note("écran TV : " + ((e && (e.name || "") + " " + (e.message || "")) || "").trim() + " → on s’efface");
+      T.application.getCurrentApplication().hide();
+    }
     return true;
   } catch (e) {
     note("source HDMI " + n + " : " + (e && (e.name || e.message)));

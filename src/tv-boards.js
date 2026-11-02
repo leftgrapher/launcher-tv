@@ -66,10 +66,16 @@ export function makeBoards(html) {
       launchApp("reglages").then((ok) => { if (!ok) super._openSys(); });
     }
 
+    // Sur la TV, l’appli s’ouvre par-dessus : la tuile grandit et passe au noir, sans texte (pas d’écran « factice »).
+    _tvSplash() {
+      this.setState((s) => (s.launch ? { launch: Object.assign({}, s.launch, { name: "", sub: "", hint: "", endBg: "#000000" }) } : {}));
+    }
+
     _launch(it, el) {
       const before = this._memo();
       super._launch(it, el);
       if (!onTV || it.sys) return;
+      this._tvSplash();
       const key = it.add || it.installed === false ? "store" : it.id;
       this._goOut(() => (HDMI[key] ? showSource(HDMI[key]) : launchApp(key)), it.add ? "Le store Samsung" : it.name, before);
     }
@@ -78,6 +84,7 @@ export function makeBoards(html) {
       const before = this._memo();
       super._launchHero(r, el);
       if (!onTV) return;
+      this._tvSplash();
       this._goOut(() => (HDMI[r.app] ? showSource(HDMI[r.app]) : launchApp(r.app)), r.name, before);
     }
 
@@ -101,11 +108,16 @@ export function makeBoards(html) {
     }
 
     // Retour dans le launcher (après une appli, une source…) : l’écran se referme dans sa tuile.
+    // Retour dans le launcher : l’accueil réapparaît en fondu, sans rejouer l’écran de lancement à l’envers.
     _resume() {
       const s = this.state || {};
       this._armIdle();
-      if (s.launch && s.launch.phase === "open") this._back(document.querySelector("[data-launcher]"));
-      else if (s.launch) setTimeout(() => this._resume(), 300);
+      if (!s.launch) return;
+      clearTimeout(this._lt1);
+      clearTimeout(this._lt2);
+      clearTimeout(this._fadeT);
+      this.setState({ launch: Object.assign({}, s.launch, { phase: "fade" }) });
+      this._fadeT = setTimeout(() => this.setState({ launch: null }), 260);
     }
   }
 
@@ -114,7 +126,12 @@ export function makeBoards(html) {
       super.componentDidMount();
       if (typeof window !== "undefined") window.__dcRemote = "hub";
       this._onVis = () => {
-        if (!document.hidden && (this.state || {}).launch) this._close();
+        const L = (this.state || {}).launch;
+        if (document.hidden || !L) return;
+        clearTimeout(this._lt1);
+        clearTimeout(this._lt2);
+        this.setState({ launch: Object.assign({}, L, { phase: "fade" }) });
+        this._lt1 = setTimeout(() => this.setState({ launch: null }), 260);
       };
       document.addEventListener("visibilitychange", this._onVis);
     }
@@ -133,6 +150,7 @@ export function makeBoards(html) {
     _open(id, el) {
       super._open(id, el);
       if (!onTV) return;
+      this.setState((s) => (s.launch ? { launch: Object.assign({}, s.launch, { name: "", sub: "", bg: "#000000" }) } : {}));
       const go = HDMI[id] ? () => showSource(HDMI[id])
         : id === "tizen" ? tizenHome
         : id === "smartthings" ? () => launchApp("smartthings")
