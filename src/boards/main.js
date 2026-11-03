@@ -613,7 +613,7 @@ ${(item?.isArt) ? html`
 <span aria-hidden="true" style="position: absolute; inset: 0; pointer-events: none; opacity: ${item?.artSheen}; background: ${item?.sheenBg}; transition: opacity 240ms ease"></span>
 ` : null}
 ${(item?.hasPeek) ? html`
-<span aria-hidden="true" style="position: absolute; inset: 0; overflow: hidden; border-radius: inherit; pointer-events: none; opacity: ${item?.peekOpacity}; transition: opacity 700ms ease; background: radial-gradient(circle at 72% 46%, ${item?.pk?.glowA} 0%, rgba(0, 0, 0, 0) 48%), linear-gradient(180deg, ${item?.pk?.sky0} 0%, ${item?.pk?.sky1} 34%, ${item?.pk?.sky2} 46%, ${item?.pk?.sky2} 100%)">
+<span aria-hidden="true" data-peek="1" style="position: absolute; inset: 0; overflow: hidden; border-radius: inherit; pointer-events: none; opacity: ${item?.peekOpacity}; transition: opacity 700ms ease; background: radial-gradient(circle at 72% 46%, ${item?.pk?.glowA} 0%, rgba(0, 0, 0, 0) 48%), linear-gradient(180deg, ${item?.pk?.sky0} 0%, ${item?.pk?.sky1} 34%, ${item?.pk?.sky2} 46%, ${item?.pk?.sky2} 100%)">
 <svg viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice" style="position: absolute; inset: 0; width: 100%; height: 100%; transform-origin: 62% 48%; animation: ${item?.peekAnim}">
 <circle cx="1380" cy="498" r="54" style="fill: ${item?.pk?.sun}"></circle>
 <path d="M0 520 C 180 470, 320 490, 480 450 S 820 420, 1000 460 S 1300 520, 1460 470 S 1780 430, 1920 460 V1080 H0 Z" style="fill: ${item?.pk?.r1}"></path>
@@ -1316,7 +1316,7 @@ class Component extends DCLogic {
       // Petit enfoncement de la tuile, comme un clic de télécommande, puis ouverture.
       this._set({ focus: id, pressed: true });
       clearTimeout(this._okT);
-      this._okT = setTimeout(() => this._launch(it, el), 120);
+      this._okT = setTimeout(() => this._launch(it, el), 30);
     };
     const toHome = () => focusOn(dockId(), { view: "home" });
 

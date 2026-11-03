@@ -12,6 +12,10 @@ const cls = (name, on) => { if (html) html.classList.toggle(name, !!on); };
 
 const FADE = 900;     // durée du fondu des images de fond dans la planche (transition opacity 900ms)
 const DWELL = 700;    // on attend que le programme affiché se stabilise avant de charger sa version 4K
+const IDLE = 1500;    // et que la télécommande soit au repos : charger une vidéo 4K pendant qu’on navigue ralentirait l’interface
+
+let lastKey = 0;
+if (typeof window !== "undefined") window.addEventListener("keydown", () => { lastKey = Date.now(); }, true);
 
 // ── Lecteur AVPlay (webapis) ─────────────────────────────────
 
@@ -166,8 +170,10 @@ function stepBg() {
     return;
   }
   if (!want) { flush(); return; }
-  bg.dwellT = setTimeout(() => {
+  const wait = () => Math.max(DWELL, IDLE - (Date.now() - lastKey));
+  const go = () => {
     if (g !== bg.gen) return;
+    if (Date.now() - lastKey < IDLE) { bg.dwellT = setTimeout(go, wait()); return; }
     play(want).then(() => {
       if (g !== bg.gen || bg.want !== want || liveOn) { closePlayer(); return; }
       bg.shown = want;
@@ -179,7 +185,8 @@ function stepBg() {
       note("fond 4K : " + e.message);
       if (g === bg.gen) closePlayer();
     });
-  }, DWELL);
+  };
+  bg.dwellT = setTimeout(go, wait());
 }
 
 // Coupe tout, sans fondu (l’appli passe en arrière-plan, ou une source HDMI prend le plan vidéo) :
@@ -287,8 +294,11 @@ export async function preview(n, hole) {
   live.mode = "preview";
   live.n = n;
   try {
+    const hadBg = !!bg.shown || !!player.url;
     await yieldBg(false);
     if (g !== live.gen) return false;
+    // Le lecteur 4K vient d’être fermé : on laisse la TV le libérer avant d’afficher la source.
+    if (hadBg) await new Promise((r) => setTimeout(r, 200));
     await setHdmi(n);
     if (g !== live.gen) return false;
     if (!(await signal(2200))) {
@@ -298,8 +308,11 @@ export async function preview(n, hole) {
     }
     if (g !== live.gen) return false;
     const w = Math.max(hole.w, (hole.h * 16) / 9) + 2, h = (w * 9) / 16;
-    await tvShow({ x: hole.x + hole.w / 2 - w / 2, y: hole.y + hole.h / 2 - h / 2, w, h }, "BEHIND");
+    const rect = { x: hole.x + hole.w / 2 - w / 2, y: hole.y + hole.h / 2 - h / 2, w, h };
+    await tvShow(rect, "BEHIND");
     if (g !== live.gen) { tvHide(); return false; }
+    // Redonnée un peu plus tard : juste après le lecteur des fonds 4K, la TV peut remettre l’image à sa taille précédente.
+    setTimeout(() => { if (g === live.gen) tvShow(rect, "BEHIND").catch(() => {}); }, 350);
     setHole({ x: Math.round(hole.x), y: Math.round(hole.y), w: Math.round(hole.w), h: Math.round(hole.h), r: Math.round(hole.r) });
     note("aperçu en direct HDMI " + n);
     return true;
@@ -310,12 +323,14 @@ export async function preview(n, hole) {
   }
 }
 
+// Arrêt de l’aperçu (on vient de quitter la tuile) : la fenêtre se referme tout de suite dans l’interface, et l’image
+// en direct est masquée juste après, pour ne pas retarder l’affichage de la tuile suivante.
 export function stopPreview() {
   if (live.mode !== "preview") return;
-  live.gen++;
+  const g = ++live.gen;
   live.mode = null;
   setHole(null);
-  tvHide();
+  setTimeout(() => { if (g === live.gen || live.mode !== "preview") tvHide(); }, 30);
   resumeBg();
 }
 

@@ -52,7 +52,10 @@ const PERF_CSS = `
 `;
 const PERF = cfg.perf != null ? !!cfg.perf : onTV;
 
-// Sur la TV : ouverture des applis (launch-fx.js) et plan vidéo sous l’interface (video.js).
+// Sur la TV : ouverture des sources (launch-fx.js) et plan vidéo sous l’interface (video.js).
+// Réactivité d’abord : seules des transformations et des fondus sont animés (la TV les calcule à part, sans retarder
+// la touche suivante) ; couleurs, bordures et ombres changent d’un coup. Le hub glisse en un seul bloc au lieu de faire
+// apparaître ses boutons un par un, et l’aperçu en image des tuiles est retiré (seule l’image en direct d’une source reste).
 // Le décor du programme ne bouge plus (effet Ken Burns retiré) : l’image 4K qui le remplace est fixe, et c’est un
 // grand calque animé en moins pour la TV.
 const TV_CSS = `
@@ -83,6 +86,17 @@ html.v-hole [data-tile] *{animation:none!important}
 .lfx-wait[data-card]{animation:lfxPulse2 1.1s ease-in-out infinite!important}
 @keyframes lfxPulse{0%,100%{opacity:1}50%{opacity:.3}}
 @keyframes lfxPulse2{0%,100%{opacity:1}50%{opacity:.6}}
+[data-peek]{display:none!important}
+[data-herobase] *{transition:none!important}
+[data-herobg]{will-change:opacity}
+.tile-flare{display:none!important}
+[data-tile]{transition:transform 380ms cubic-bezier(0.25,1.4,0.5,1),scale 320ms cubic-bezier(0.34,1.5,0.5,1),opacity 220ms ease!important}
+[data-hub] .lg{transition:transform 380ms cubic-bezier(0.25,1.4,0.5,1),scale 320ms cubic-bezier(0.34,1.5,0.5,1),opacity 220ms ease!important}
+.board-hub{will-change:opacity,transform}
+.board-hub.off{opacity:0;pointer-events:none}
+.board-hub.in{animation:hubInTV 280ms cubic-bezier(0.2,0.9,0.3,1) both}
+.board-hub.out{animation-duration:220ms!important}
+@keyframes hubInTV{from{opacity:0;transform:translateX(36px)}to{opacity:1;transform:none}}
 `;
 
 function injectCss() {
@@ -91,11 +105,16 @@ function injectCss() {
   document.head.appendChild(el);
 }
 
-// Fluidité mesurée (images par seconde), pour le panneau Info.
-const perf = { fps: 0, slow: 0 };
-function measureFps() {
+// Fluidité mesurée (images par seconde), pour le panneau Info. Seulement quand le panneau est ouvert :
+// une boucle d’images permanente obligerait la TV à recalculer la page à chaque image, même sans rien toucher.
+const perf = { fps: 0, slow: 0, on: false };
+function measureFps(on) {
+  perf.on = on;
+  if (!on || perf.running) return;
+  perf.running = true;
   let n = 0, t0 = performance.now(), last = t0;
   const tick = (t) => {
+    if (!perf.on) { perf.running = false; return; }
     n++;
     if (t - last > 50) perf.slow++;
     last = t;
@@ -154,6 +173,7 @@ class App extends Component {
       if (e.key === "i" || e.keyCode === 457 || e.keyCode === 10252 || e.key === "MediaPlayPause") {
         const on = !this.state.log;
         this.setState({ log: on });
+        measureFps(on);
         if (on) {
           clearInterval(this._logT);
           this._logT = setInterval(() => this.forceUpdate(), 1000);
@@ -164,12 +184,20 @@ class App extends Component {
     window.addEventListener("keydown", this._onKey);
     this.refreshRecos();
     this._recosT = setInterval(() => this.refreshRecos(), 30 * 60 * 1000);
+    if (onTV) setTimeout(() => this.setState({ hubReady: true }), 1500);
     document.addEventListener("visibilitychange", () => { if (!document.hidden) this.refreshRecos(); });
   }
 
+  // Sur la TV, le hub est préparé une fois pour toutes au démarrage (caché) : l’ouvrir ou le fermer ne fait plus que
+  // le faire glisser et apparaître, ce que la TV calcule à part, sans reconstruire tous ses boutons à chaque fois.
   openHub() {
     clearTimeout(this._hubT);
     window.__dcRemote = "hub";
+    if (onTV) {
+      if (this._hub && this._hub.tvReset) this._hub.tvReset();
+      this.setState({ hub: "in", hubReady: true });
+      return;
+    }
     this.setState((s) => ({ hub: "in", hubKey: s.hub === "in" ? s.hubKey : s.hubKey + 1 }));
   }
 
@@ -178,7 +206,7 @@ class App extends Component {
     if (!this.state.hub) return;
     this.setState({ hub: "out" });
     clearTimeout(this._hubT);
-    this._hubT = setTimeout(() => this.setState({ hub: null }), 270);
+    this._hubT = setTimeout(() => this.setState({ hub: null }), onTV ? 230 : 270);
   }
 
   logText(s) {
@@ -209,7 +237,9 @@ class App extends Component {
   render(_, s) {
     return html`
       <div class="board board-main"><${Main} ...${mainProps} recos=${s.recos} /></div>
-      ${s.hub ? html`<div class=${"board board-hub" + (s.hub === "out" ? " out" : "")}><${Hub} key=${s.hubKey} ...${hubProps} /></div>` : null}
+      ${onTV
+        ? (s.hubReady ? html`<div class=${"board board-hub" + (s.hub === "in" ? " in" : s.hub === "out" ? " out" : " off")}><${Hub} ref=${(r) => (this._hub = r)} premount=${true} ...${hubProps} /></div>` : null)
+        : s.hub ? html`<div class=${"board board-hub" + (s.hub === "out" ? " out" : "")}><${Hub} key=${s.hubKey} ...${hubProps} /></div>` : null}
       ${s.toast ? html`<div class=${"launcher-toast" + (s.toast.on ? " on" : "")} role="status">${s.toast.text}</div>` : null}
       ${s.log ? html`<div class="launcher-log">${this.logText(s)}</div>` : null}
     `;
@@ -220,7 +250,6 @@ function start() {
   window.addEventListener("error", (e) => note("erreur : " + (e.message || e.type)));
   window.addEventListener("unhandledrejection", (e) => note("erreur : " + ((e.reason && e.reason.message) || e.reason)));
   injectCss();
-  measureFps();
   // Touche Info de la télécommande (journal de diagnostic).
   ["Info", "MediaPlayPause"].forEach((k) => { try { if (onTV && window.tizen.tvinputdevice) window.tizen.tvinputdevice.registerKey(k); } catch (e) {} });
   let root = document.getElementById("launcher");

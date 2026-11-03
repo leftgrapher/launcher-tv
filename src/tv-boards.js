@@ -7,6 +7,7 @@ import * as HubBoard from "./boards/hub.js";
 import { onTV, launchApp, launchYoutubeVideo, showSource, quitLauncher, HDMI, store, note } from "./tv.js";
 import { openFx, rectIn } from "./launch-fx.js";
 import * as video from "./video.js";
+import { playFast, warmSounds } from "./sounds.js";
 
 function boardBase(mod, html) {
   return class DCLogic extends Component {
@@ -47,6 +48,17 @@ export function makeBoards(html) {
       };
       document.addEventListener("visibilitychange", this._onVis);
       this._tvVideo();
+      // Sons de l’accueil et du hub préparés d’avance, pendant que rien ne bouge.
+      if (onTV) setTimeout(() => {
+        warmSounds(this);
+        warmSounds({ props: Object.assign({}, HubBoard.defaults, { sons: this.props.sons, volumeSons: this.props.volumeSons }), _sons: HubLogic.prototype._sons });
+      }, 1200);
+    }
+
+    // Sons : rejoués depuis des tampons préparés d’avance (voir sounds.js).
+    _snd(name, o) {
+      if (onTV && playFast(this, name, o)) return;
+      super._snd(name, o);
     }
 
     componentWillUnmount() {
@@ -74,14 +86,17 @@ export function makeBoards(html) {
       const s = this.state || {};
       const N = this._nav || {};
       const view = N.view;
-      const calm = !s.launch && !s.sys && !s.edit && !this._fx && !document.hidden && !(remote() && remote() !== "main");
+      // Le hub s’ouvre par-dessus sans toucher au fond 4K (le couper et le recharger ferait saccader son ouverture).
+      const calmBg = !s.launch && !s.sys && !s.edit && !this._fx && !document.hidden;
+      const calm = calmBg && !(remote() && remote() !== "main");
       let cur = null;
       try { cur = N.progFor && N.idx != null ? N.progFor(N.idx) : null; } catch (e) {}
-      video.wantBg(calm && (view === "home" || view === "hero") && cur && cur.bg4k ? cur.bg4k : null);
-      // Aperçu : quand la tuile d’une source HDMI reste sélectionnée (comme l’aperçu en image des applis),
-      // son image en direct s’affiche dans la tuile.
       const f = s.focus || s.lastOpen;
       const n = HDMI[f];
+      // Pas de fond 4K quand une source HDMI est sélectionnée dans le dock : son aperçu en direct va prendre le plan vidéo.
+      const srcFocus = view === "home" && !!n;
+      video.wantBg(calmBg && !srcFocus && (view === "home" || view === "hero") && cur && cur.bg4k ? cur.bg4k : null);
+      // Aperçu : quand la tuile d’une source HDMI reste sélectionnée, son image en direct s’affiche dans la tuile.
       const want = calm && !!n && s.peek === f && view === "home" && this.props.apercuDirect !== false;
       if (want && this._pvFor !== f) {
         const el = document.querySelector('[data-tile="' + f + '"]');
@@ -99,8 +114,9 @@ export function makeBoards(html) {
       }
     }
 
-    // Pendant que le hub est affiché par-dessus, l’accueil ne part pas en veille.
+    // Pas d’écran de veille sur la TV (il ne servait à rien) ; dans la maquette, il reste visible.
     _sleep() {
+      if (onTV) return;
       if (remote() && remote() !== "main") { this._armIdle(); return; }
       super._sleep();
     }
@@ -252,7 +268,7 @@ export function makeBoards(html) {
           if (before) this.setState(before);
           this._resume();
         });
-      }, 90);
+      }, 0);
     }
 
     // Retour dans le launcher (après une appli, une source…) : l’accueil réapparaît en fondu.
@@ -274,9 +290,28 @@ export function makeBoards(html) {
   }
 
   class Hub extends HubLogic {
+    _snd(name, o) {
+      if (this._mute) return;
+      if (onTV && playFast(this, name, o)) return;
+      super._snd(name, o);
+    }
+
+    // Réouverture (hub préparé d’avance) : il repart de son état de départ, sans son.
+    tvReset() {
+      clearTimeout(this._lt1);
+      clearTimeout(this._lt2);
+      this._mute = true;
+      this._cell = null;
+      this.setState({ focus: null, tilt: null, pressed: false, launch: null, off: null, toast: null, sys: null }, () => {
+        if (this._sndState) this._sndPrev = this._sndState();
+        this._mute = false;
+      });
+    }
+
     componentDidMount() {
       super.componentDidMount();
-      if (typeof window !== "undefined") window.__dcRemote = "hub";
+      // Préparé d’avance sur la TV : il ne prend la télécommande qu’à son ouverture (App.openHub).
+      if (typeof window !== "undefined" && !this.props.premount) window.__dcRemote = "hub";
       this._onVis = () => {
         const L = (this.state || {}).launch;
         if (document.hidden) return;
@@ -327,7 +362,7 @@ export function makeBoards(html) {
         toast("La TV n’a pas pu ouvrir « " + ((this._pages()[id] || {}).name || id) + " »");
         this._endFx();
         this.setState({ launch: null });
-      }), 90);
+      }), 0);
     }
 
     async _openSource(n) {
