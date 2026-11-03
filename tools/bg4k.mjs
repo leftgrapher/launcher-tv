@@ -2,7 +2,8 @@
 // La TV dessine l’interface en 1920×1080 ; seul son plan vidéo affiche de vrais pixels 4K. Pour chaque reco dont
 // TMDB a un fond sans texte en 3840 px, on prépare :
 //   <clé>.jpg : la même image en 1920×1080, affichée par l’interface (plus nette que la taille TMDB la plus proche, 1280 px) ;
-//   <clé>.mp4 : une demi-seconde de cette image en HEVC 3840×2160, que la TV joue sous l’interface et fige sur la 1re image.
+//   <clé>.mp4 : 3 secondes de cette image en HEVC 3840×2160, que la TV joue sous l’interface et fige sur une image
+//   (assez long pour que le lecteur de la TV signale le début de la lecture ; une image fixe pèse presque rien de plus).
 // Les fichiers déjà préparés restent dans le cache (.cache/bg) d’un passage à l’autre : seules les nouvelles recos sont converties.
 import fs from "node:fs";
 import path from "node:path";
@@ -36,11 +37,11 @@ async function download(url, file, tries = 3) {
 function encode(src, jpg, mp4) {
   ffmpeg(["-i", src, "-vf", CROP + ",scale=1920:1080:flags=lanczos", "-q:v", "3", jpg]);
   ffmpeg([
-    "-loop", "1", "-framerate", "60", "-i", src, "-t", "0.5",
+    "-loop", "1", "-framerate", "60", "-i", src, "-t", "3",
     // JPEG (BT.601, pleine échelle) → vidéo BT.709 limitée, 10 bits pour éviter les aplats en escalier dans les ciels.
     "-vf", CROP + ",scale=3840:2160:flags=lanczos:in_range=pc:out_range=tv:in_color_matrix=bt601:out_color_matrix=bt709,format=yuv420p10le",
     "-c:v", "libx265", "-preset", "medium", "-crf", "16",
-    "-x265-params", "keyint=60:min-keyint=60:scenecut=0:log-level=error",
+    "-x265-params", "keyint=600:min-keyint=600:scenecut=0:log-level=error",
     "-tag:v", "hvc1", "-color_primaries", "bt709", "-color_trc", "bt709", "-colorspace", "bt709", "-color_range", "tv",
     "-movflags", "+faststart", "-an", mp4
   ]);
@@ -64,7 +65,8 @@ export async function prepare4k(items, { siteDir, outDir, cacheDir, log = consol
   const t0 = Date.now();
   const keep = new Set();
   for (const it of todo) {
-    const key = path.basename(new URL(it.uhd).pathname).replace(/\.\w+$/, "").replace(/[^\w-]/g, "");
+    // « -3s » : version du clip (les anciens, d’une demi-seconde, étaient trop courts pour la TV).
+    const key = path.basename(new URL(it.uhd).pathname).replace(/\.\w+$/, "").replace(/[^\w-]/g, "") + "-3s";
     const cj = path.join(cacheDir, key + ".jpg"), cm = path.join(cacheDir, key + ".mp4");
     keep.add(key);
     try {

@@ -72,53 +72,66 @@ function closePlayer() {
   try { av.close(); } catch (e) {}
 }
 
-// Ouvre le clip et s’arrête sur sa première image. Résout quand l’image est à l’écran (sous l’interface).
+// Ouvre le clip et s’arrête sur une de ses premières images. Résout quand l’image est à l’écran (sous l’interface).
+// Le début de la lecture est guetté de trois façons (selon les TV, l’une ou l’autre ne vient pas) : l’avancement
+// signalé par le lecteur, son horloge interrogée régulièrement, ou la fin du clip (la dernière image reste affichée).
 function play(url) {
   return webapis().then((w) => new Promise((res, rej) => {
     closePlayer();
     const g = ++player.gen;
     const av = w.avplay;
     planeEl();
-    let done = false;
-    const ready = () => {
+    let done = false, step = "ouverture", poll = null;
+    const ready = (how) => {
       if (done || g !== player.gen) return;
       done = true;
       clearTimeout(timer);
+      clearInterval(poll);
       player.url = url;
+      if (!player.how) { player.how = how; note("fond 4K : lecture détectée (" + how + ")"); }
       res();
     };
     const fail = (e) => {
       if (done) return;
       done = true;
       clearTimeout(timer);
-      rej(e instanceof Error ? e : new Error(String((e && (e.name || e.message)) || e)));
+      clearInterval(poll);
+      let state = "";
+      try { state = av.getState(); } catch (x) {}
+      rej(new Error(((e && (e.message || e.name)) || String(e)) + " (étape : " + step + (state ? ", lecteur : " + state : "") + ")"));
     };
-    const timer = setTimeout(() => fail(new Error("pas d’image au bout de 6 s")), 6000);
+    const timer = setTimeout(() => fail(new Error("pas d’image au bout de 10 s")), 10000);
+    const freeze = (how) => {
+      setTimeout(() => { try { if (g === player.gen) av.pause(); } catch (e) {} ready(how); }, 120);
+    };
     try {
       av.open(url);
       av.setListener({
-        // Première image affichée : on fige le clip dessus (en pause, l’image reste à l’écran).
-        oncurrentplaytime: (t) => {
-          if (done || !(t > 0)) return;
-          setTimeout(() => { try { if (g === player.gen) av.pause(); } catch (e) {} ready(); }, 80);
-        },
-        // Clip terminé sans arrêt : la dernière image reste affichée.
-        onstreamcompleted: () => ready(),
+        oncurrentplaytime: (t) => { if (!done && t > 0) freeze("avancement"); },
+        onstreamcompleted: () => ready("fin du clip"),
         onerror: (e) => fail(new Error("lecture : " + e)),
         onbufferingstart: () => {},
         onbufferingprogress: () => {},
-        onbufferingcomplete: () => {},
+        onbufferingcomplete: () => { step = "tampon prêt"; },
         onevent: () => {}
       });
       try { av.setStreamingProperty("SET_MODE_4K", "TRUE"); } catch (e) {}
       const zone = fullRect(av);
       try { av.setDisplayMethod("PLAYER_DISPLAY_MODE_FULL_SCREEN"); } catch (e) {}
       if (!player.noted) { player.noted = true; note("fond 4K : zone " + zone + " (page " + window.innerWidth + "×" + window.innerHeight + ")"); }
+      step = "préparation";
       av.prepareAsync(() => {
         if (g !== player.gen) return;
+        step = "lecture";
         // Zone redonnée une fois le clip prêt : certaines TV la recalculent à la préparation.
         try { fullRect(av); } catch (e) {}
-        try { av.play(); } catch (e) { fail(e); }
+        try { av.play(); } catch (e) { fail(e); return; }
+        poll = setInterval(() => {
+          if (done || g !== player.gen) { clearInterval(poll); return; }
+          let t = 0;
+          try { t = av.getCurrentTime(); } catch (e) {}
+          if (t > 0) { clearInterval(poll); freeze("horloge"); }
+        }, 150);
       }, fail);
     } catch (e) {
       fail(e);
@@ -137,7 +150,8 @@ let liveOn = false;
 export function wantBg(url) {
   if (!onTV) return;
   url = url || null;
-  if (bg.failed[url]) url = null;
+  // Un fond qui n’a pas pu s’afficher n’est retenté qu’au bout de 5 minutes.
+  if (bg.failed[url] && Date.now() - bg.failed[url] < 5 * 60 * 1000) url = null;
   if (url === bg.want) return;
   bg.want = url;
   stepBg();
@@ -181,7 +195,7 @@ function stepBg() {
       cls("v-hero", true);
       note("fond 4K affiché");
     }, (e) => {
-      bg.failed[want] = true;
+      bg.failed[want] = Date.now();
       note("fond 4K : " + e.message);
       if (g === bg.gen) closePlayer();
     });

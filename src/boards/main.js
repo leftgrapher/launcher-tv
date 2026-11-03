@@ -59,7 +59,7 @@ ${(v?.hero0) ? html`
 ${(v?.hero?.hasLogo) ? html`<img src="${v?.hero?.logo}" alt="${v?.hero?.title}" style="display: block; max-width: 520px; max-height: 150px; width: auto; height: auto; margin-bottom: 10px; filter: drop-shadow(0 2px 18px rgba(0, 0, 0, 0.4))" />` : null}
 ${(v?.hero?.noLogo) ? html`${v?.hero?.title}` : null}
 </h1>
-<p style="position: relative; margin: 6px 0 0; display: flex; align-items: center; gap: 8px; font-size: 20px; font-weight: 500; color: #D5D7E0">
+<p style="position: absolute; left: 0; top: 675px; margin: 0; display: flex; align-items: center; gap: 8px; font-size: 20px; font-weight: 500; color: #D5D7E0; white-space: nowrap">
 <span style="font-size: 18px; font-weight: 500; letter-spacing: 0.01em">Sur</span>
 <span aria-hidden="true" class="service-logo" style="display: inline-flex; align-items: center; height: 24px; color: #FFFFFF; filter: drop-shadow(0 1px 10px rgba(0, 0, 0, 0.35))">
 <span class="service-ph" style="display: inline-flex; align-items: center; justify-content: center; width: 64px; height: 24px; box-sizing: border-box; border-radius: 7px; background: rgba(255, 255, 255, 0.1); border: 1.5px dashed rgba(255, 255, 255, 0.45); color: #D5D7E0"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect><circle cx="9" cy="9" r="2"></circle><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path></svg></span>
@@ -84,7 +84,7 @@ ${(v?.hero1) ? html`
 ${(v?.hero?.hasLogo) ? html`<img src="${v?.hero?.logo}" alt="${v?.hero?.title}" style="display: block; max-width: 520px; max-height: 150px; width: auto; height: auto; margin-bottom: 10px; filter: drop-shadow(0 2px 18px rgba(0, 0, 0, 0.4))" />` : null}
 ${(v?.hero?.noLogo) ? html`${v?.hero?.title}` : null}
 </h1>
-<p style="position: relative; margin: 6px 0 0; display: flex; align-items: center; gap: 8px; font-size: 20px; font-weight: 500; color: #D5D7E0">
+<p style="position: absolute; left: 0; top: 675px; margin: 0; display: flex; align-items: center; gap: 8px; font-size: 20px; font-weight: 500; color: #D5D7E0; white-space: nowrap">
 <span style="font-size: 18px; font-weight: 500; letter-spacing: 0.01em">Sur</span>
 <span aria-hidden="true" class="service-logo" style="display: inline-flex; align-items: center; height: 24px; color: #FFFFFF; filter: drop-shadow(0 1px 10px rgba(0, 0, 0, 0.35))">
 <span class="service-ph" style="display: inline-flex; align-items: center; justify-content: center; width: 64px; height: 24px; box-sizing: border-box; border-radius: 7px; background: rgba(255, 255, 255, 0.1); border: 1.5px dashed rgba(255, 255, 255, 0.45); color: #D5D7E0"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect><circle cx="9" cy="9" r="2"></circle><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path></svg></span>
@@ -119,7 +119,7 @@ ${(v?.hero2) ? html`
 ${(v?.hero?.hasLogo) ? html`<img src="${v?.hero?.logo}" alt="${v?.hero?.title}" style="display: block; max-width: 520px; max-height: 150px; width: auto; height: auto; margin-bottom: 10px; filter: drop-shadow(0 2px 18px rgba(0, 0, 0, 0.4))" />` : null}
 ${(v?.hero?.noLogo) ? html`${v?.hero?.title}` : null}
 </h1>
-<p style="position: relative; margin: 6px 0 0; display: flex; align-items: center; gap: 8px; font-size: 20px; font-weight: 500; color: #D5D7E0">
+<p style="position: absolute; left: 0; top: 675px; margin: 0; display: flex; align-items: center; gap: 8px; font-size: 20px; font-weight: 500; color: #D5D7E0; white-space: nowrap">
 <span style="font-size: 18px; font-weight: 500; letter-spacing: 0.01em">Sur</span>
 <span aria-hidden="true" class="service-logo" style="display: inline-flex; align-items: center; height: 24px; color: #FFFFFF; filter: drop-shadow(0 1px 10px rgba(0, 0, 0, 0.35))">
 <span class="service-ph" style="display: inline-flex; align-items: center; justify-content: center; width: 64px; height: 24px; box-sizing: border-box; border-radius: 7px; background: rgba(255, 255, 255, 0.1); border: 1.5px dashed rgba(255, 255, 255, 0.45); color: #D5D7E0"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect><circle cx="9" cy="9" r="2"></circle><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path></svg></span>
@@ -144,7 +144,7 @@ ${(v?.hero3) ? html`
 ${(v?.hero?.hasLogo) ? html`<img src="${v?.hero?.logo}" alt="${v?.hero?.title}" style="display: block; max-width: 520px; max-height: 150px; width: auto; height: auto; margin-bottom: 10px; filter: drop-shadow(0 2px 18px rgba(0, 0, 0, 0.4))" />` : null}
 ${(v?.hero?.noLogo) ? html`${v?.hero?.title}` : null}
 </h1>
-<p style="position: relative; margin: 6px 0 0; display: flex; align-items: center; gap: 8px; font-size: 20px; font-weight: 500; color: #D5D7E0">
+<p style="position: absolute; left: 0; top: 675px; margin: 0; display: flex; align-items: center; gap: 8px; font-size: 20px; font-weight: 500; color: #D5D7E0; white-space: nowrap">
 <span style="font-size: 18px; font-weight: 500; letter-spacing: 0.01em">Sur</span>
 <span aria-hidden="true" class="service-logo" style="display: inline-flex; align-items: center; height: 24px; color: #FFFFFF; filter: drop-shadow(0 1px 10px rgba(0, 0, 0, 0.35))">
 <span class="service-ph" style="display: inline-flex; align-items: center; justify-content: center; width: 64px; height: 24px; box-sizing: border-box; border-radius: 7px; background: rgba(255, 255, 255, 0.1); border: 1.5px dashed rgba(255, 255, 255, 0.45); color: #D5D7E0"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect><circle cx="9" cy="9" r="2"></circle><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path></svg></span>
@@ -166,7 +166,7 @@ ${(v?.hero4) ? html`
 ${(v?.hero?.hasLogo) ? html`<img src="${v?.hero?.logo}" alt="${v?.hero?.title}" style="display: block; max-width: 520px; max-height: 150px; width: auto; height: auto; margin-bottom: 10px; filter: drop-shadow(0 2px 18px rgba(0, 0, 0, 0.4))" />` : null}
 ${(v?.hero?.noLogo) ? html`${v?.hero?.title}` : null}
 </h1>
-<p style="position: relative; margin: 6px 0 0; display: flex; align-items: center; gap: 8px; font-size: 20px; font-weight: 500; color: #D5D7E0">
+<p style="position: absolute; left: 0; top: 675px; margin: 0; display: flex; align-items: center; gap: 8px; font-size: 20px; font-weight: 500; color: #D5D7E0; white-space: nowrap">
 <span style="font-size: 18px; font-weight: 500; letter-spacing: 0.01em">Sur</span>
 <span aria-hidden="true" class="service-logo" style="display: inline-flex; align-items: center; height: 24px; color: #FFFFFF; filter: drop-shadow(0 1px 10px rgba(0, 0, 0, 0.35))">
 <span class="service-ph" style="display: inline-flex; align-items: center; justify-content: center; width: 64px; height: 24px; box-sizing: border-box; border-radius: 7px; background: rgba(255, 255, 255, 0.1); border: 1.5px dashed rgba(255, 255, 255, 0.45); color: #D5D7E0"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect><circle cx="9" cy="9" r="2"></circle><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path></svg></span>
@@ -204,7 +204,7 @@ ${(v?.hero5) ? html`
 ${(v?.hero?.hasLogo) ? html`<img src="${v?.hero?.logo}" alt="${v?.hero?.title}" style="display: block; max-width: 520px; max-height: 150px; width: auto; height: auto; margin-bottom: 10px; filter: drop-shadow(0 2px 18px rgba(0, 0, 0, 0.4))" />` : null}
 ${(v?.hero?.noLogo) ? html`${v?.hero?.title}` : null}
 </h1>
-<p style="position: relative; margin: 6px 0 0; display: flex; align-items: center; gap: 8px; font-size: 20px; font-weight: 500; color: #D5D7E0">
+<p style="position: absolute; left: 0; top: 675px; margin: 0; display: flex; align-items: center; gap: 8px; font-size: 20px; font-weight: 500; color: #D5D7E0; white-space: nowrap">
 <span style="font-size: 18px; font-weight: 500; letter-spacing: 0.01em">Sur</span>
 <span aria-hidden="true" class="service-logo" style="display: inline-flex; align-items: center; height: 24px; color: #FFFFFF; filter: drop-shadow(0 1px 10px rgba(0, 0, 0, 0.35))">
 <span class="service-ph" style="display: inline-flex; align-items: center; justify-content: center; width: 64px; height: 24px; box-sizing: border-box; border-radius: 7px; background: rgba(255, 255, 255, 0.1); border: 1.5px dashed rgba(255, 255, 255, 0.45); color: #D5D7E0"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect><circle cx="9" cy="9" r="2"></circle><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path></svg></span>
@@ -229,7 +229,7 @@ ${(v?.hero6) ? html`
 ${(v?.hero?.hasLogo) ? html`<img src="${v?.hero?.logo}" alt="${v?.hero?.title}" style="display: block; max-width: 520px; max-height: 150px; width: auto; height: auto; margin-bottom: 10px; filter: drop-shadow(0 2px 18px rgba(0, 0, 0, 0.4))" />` : null}
 ${(v?.hero?.noLogo) ? html`${v?.hero?.title}` : null}
 </h1>
-<p style="position: relative; margin: 6px 0 0; display: flex; align-items: center; gap: 8px; font-size: 20px; font-weight: 500; color: #D5D7E0">
+<p style="position: absolute; left: 0; top: 675px; margin: 0; display: flex; align-items: center; gap: 8px; font-size: 20px; font-weight: 500; color: #D5D7E0; white-space: nowrap">
 <span style="font-size: 18px; font-weight: 500; letter-spacing: 0.01em">Sur</span>
 <span aria-hidden="true" class="service-logo" style="display: inline-flex; align-items: center; height: 24px; color: #FFFFFF; filter: drop-shadow(0 1px 10px rgba(0, 0, 0, 0.35))">
 <span class="service-ph" style="display: inline-flex; align-items: center; justify-content: center; width: 64px; height: 24px; box-sizing: border-box; border-radius: 7px; background: rgba(255, 255, 255, 0.1); border: 1.5px dashed rgba(255, 255, 255, 0.45); color: #D5D7E0"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect><circle cx="9" cy="9" r="2"></circle><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path></svg></span>
@@ -272,7 +272,7 @@ ${(v?.hero7) ? html`
 ${(v?.hero?.hasLogo) ? html`<img src="${v?.hero?.logo}" alt="${v?.hero?.title}" style="display: block; max-width: 520px; max-height: 150px; width: auto; height: auto; margin-bottom: 10px; filter: drop-shadow(0 2px 18px rgba(0, 0, 0, 0.4))" />` : null}
 ${(v?.hero?.noLogo) ? html`${v?.hero?.title}` : null}
 </h1>
-<p style="position: relative; margin: 6px 0 0; display: flex; align-items: center; gap: 8px; font-size: 20px; font-weight: 500; color: #D5D7E0">
+<p style="position: absolute; left: 0; top: 675px; margin: 0; display: flex; align-items: center; gap: 8px; font-size: 20px; font-weight: 500; color: #D5D7E0; white-space: nowrap">
 <span style="font-size: 18px; font-weight: 500; letter-spacing: 0.01em">Sur</span>
 <span aria-hidden="true" class="service-logo" style="display: inline-flex; align-items: center; height: 24px; color: #FFFFFF; filter: drop-shadow(0 1px 10px rgba(0, 0, 0, 0.35))">
 <span class="service-ph" style="display: inline-flex; align-items: center; justify-content: center; width: 64px; height: 24px; box-sizing: border-box; border-radius: 7px; background: rgba(255, 255, 255, 0.1); border: 1.5px dashed rgba(255, 255, 255, 0.45); color: #D5D7E0"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect><circle cx="9" cy="9" r="2"></circle><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path></svg></span>
@@ -294,7 +294,7 @@ ${(v?.hero8) ? html`
 ${(v?.hero?.hasLogo) ? html`<img src="${v?.hero?.logo}" alt="${v?.hero?.title}" style="display: block; max-width: 520px; max-height: 150px; width: auto; height: auto; margin-bottom: 10px; filter: drop-shadow(0 2px 18px rgba(0, 0, 0, 0.4))" />` : null}
 ${(v?.hero?.noLogo) ? html`${v?.hero?.title}` : null}
 </h1>
-<p style="position: relative; margin: 6px 0 0; display: flex; align-items: center; gap: 8px; font-size: 20px; font-weight: 500; color: #D5D7E0">
+<p style="position: absolute; left: 0; top: 675px; margin: 0; display: flex; align-items: center; gap: 8px; font-size: 20px; font-weight: 500; color: #D5D7E0; white-space: nowrap">
 <span style="font-size: 18px; font-weight: 500; letter-spacing: 0.01em">Sur</span>
 <span aria-hidden="true" class="service-logo" style="display: inline-flex; align-items: center; height: 24px; color: #FFFFFF; filter: drop-shadow(0 1px 10px rgba(0, 0, 0, 0.35))">
 <span class="service-ph" style="display: inline-flex; align-items: center; justify-content: center; width: 64px; height: 24px; box-sizing: border-box; border-radius: 7px; background: rgba(255, 255, 255, 0.1); border: 1.5px dashed rgba(255, 255, 255, 0.45); color: #D5D7E0"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect><circle cx="9" cy="9" r="2"></circle><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path></svg></span>
@@ -329,7 +329,7 @@ ${(v?.hero9) ? html`
 ${(v?.hero?.hasLogo) ? html`<img src="${v?.hero?.logo}" alt="${v?.hero?.title}" style="display: block; max-width: 520px; max-height: 150px; width: auto; height: auto; margin-bottom: 10px; filter: drop-shadow(0 2px 18px rgba(0, 0, 0, 0.4))" />` : null}
 ${(v?.hero?.noLogo) ? html`${v?.hero?.title}` : null}
 </h1>
-<p style="position: relative; margin: 6px 0 0; display: flex; align-items: center; gap: 8px; font-size: 20px; font-weight: 500; color: #D5D7E0">
+<p style="position: absolute; left: 0; top: 675px; margin: 0; display: flex; align-items: center; gap: 8px; font-size: 20px; font-weight: 500; color: #D5D7E0; white-space: nowrap">
 <span style="font-size: 18px; font-weight: 500; letter-spacing: 0.01em">Sur</span>
 <span aria-hidden="true" class="service-logo" style="display: inline-flex; align-items: center; height: 24px; color: #FFFFFF; filter: drop-shadow(0 1px 10px rgba(0, 0, 0, 0.35))">
 <span class="service-ph" style="display: inline-flex; align-items: center; justify-content: center; width: 64px; height: 24px; box-sizing: border-box; border-radius: 7px; background: rgba(255, 255, 255, 0.1); border: 1.5px dashed rgba(255, 255, 255, 0.45); color: #D5D7E0"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect><circle cx="9" cy="9" r="2"></circle><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path></svg></span>
@@ -351,7 +351,7 @@ ${(v?.hero10) ? html`
 ${(v?.hero?.hasLogo) ? html`<img src="${v?.hero?.logo}" alt="${v?.hero?.title}" style="display: block; max-width: 520px; max-height: 150px; width: auto; height: auto; margin-bottom: 10px; filter: drop-shadow(0 2px 18px rgba(0, 0, 0, 0.4))" />` : null}
 ${(v?.hero?.noLogo) ? html`${v?.hero?.title}` : null}
 </h1>
-<p style="position: relative; margin: 6px 0 0; display: flex; align-items: center; gap: 8px; font-size: 20px; font-weight: 500; color: #D5D7E0">
+<p style="position: absolute; left: 0; top: 675px; margin: 0; display: flex; align-items: center; gap: 8px; font-size: 20px; font-weight: 500; color: #D5D7E0; white-space: nowrap">
 <span style="font-size: 18px; font-weight: 500; letter-spacing: 0.01em">Sur</span>
 <span aria-hidden="true" class="service-logo" style="display: inline-flex; align-items: center; height: 24px; color: #FFFFFF; filter: drop-shadow(0 1px 10px rgba(0, 0, 0, 0.35))">
 <span class="service-ph" style="display: inline-flex; align-items: center; justify-content: center; width: 64px; height: 24px; box-sizing: border-box; border-radius: 7px; background: rgba(255, 255, 255, 0.1); border: 1.5px dashed rgba(255, 255, 255, 0.45); color: #D5D7E0"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect><circle cx="9" cy="9" r="2"></circle><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path></svg></span>
@@ -369,7 +369,7 @@ ${(v?.hero?.hasReason) ? html`
 ` : null}
 </section>
 
-<div aria-hidden="true" data-dots="1" style="position: absolute; left: 56px; top: 745px; display: flex; justify-content: flex-start; gap: 8px; pointer-events: none; filter: drop-shadow(0 1px 6px rgba(0, 0, 0, 0.35)); opacity: ${v?.dotsOpacity}; transition: ${v?.dotsTransition}">
+<div aria-hidden="true" data-dots="1" style="position: absolute; right: 56px; top: 748px; display: flex; justify-content: flex-end; gap: 8px; pointer-events: none; filter: drop-shadow(0 1px 6px rgba(0, 0, 0, 0.35)); opacity: ${v?.dotsOpacity}; transition: ${v?.dotsTransition}">
 ${(v?.dots || []).map((d, $index) => html`
 <span style="position: relative; display: block; overflow: hidden; width: ${d?.w}; height: 4px; border-radius: 2px; background: rgba(255, 255, 255, 0.28); transition: width 400ms ease">
 <span style="position: absolute; inset: 0; border-radius: 2px; background: #F5F5F7; transform-origin: left center; transform: scaleX(${d?.fill}); animation: ${d?.anim}"></span>
