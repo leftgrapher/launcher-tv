@@ -92,7 +92,8 @@ Sans clé TMDB, l’accueil garde ses exemples. Attention : `recos.json` est en 
 | Fonds des recos | En vraie 4K quand TMDB a l’image en 3840 px : un clip vidéo d’une image, préparé en ligne avec les recos (`tools/bg4k.mjs`), joué sous l’interface par le lecteur de la TV (`src/video.js`). Ailleurs, l’image 1920×1080. |
 | Ajouter une appli | Ouvre le store Samsung. |
 | Réglages | Ouvrent le vrai panneau de réglages Samsung, par-dessus le launcher. |
-| Hub > Accueil Tizen | Ouvre l’accueil Samsung d’origine. |
+| Hub > Accueil Tizen | Ferme le launcher et ouvre l’accueil Samsung d’origine. |
+| Retour sur l’accueil | Un message, puis un 2e appui (dans les 2 s) ferme le launcher. Pour le rouvrir : liste des applis Samsung. |
 | Retour dans le launcher | L’accueil réapparaît en fondu. |
 | Ordre des applis (mode modifier) | Gardé d’un allumage à l’autre. |
 

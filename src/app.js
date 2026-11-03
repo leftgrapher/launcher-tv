@@ -74,6 +74,7 @@ html.v-full,html.v-full body{background:transparent!important}
 html.v-full .board{visibility:hidden}
 html.v-return .board{animation:vReturn 320ms ease both}
 @keyframes vReturn{from{opacity:0}to{opacity:1}}
+html.v-quit #launcher{opacity:0;transition:opacity 240ms ease}
 `;
 
 function injectCss() {

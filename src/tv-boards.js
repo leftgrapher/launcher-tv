@@ -4,7 +4,7 @@
 import { Component } from "preact";
 import * as MainBoard from "./boards/main.js";
 import * as HubBoard from "./boards/hub.js";
-import { onTV, launchApp, showSource, tizenHome, HDMI, store, note } from "./tv.js";
+import { onTV, launchApp, showSource, quitLauncher, HDMI, store, note } from "./tv.js";
 import { openFx, rectIn } from "./launch-fx.js";
 import * as video from "./video.js";
 
@@ -150,6 +150,29 @@ export function makeBoards(html) {
       return showSource(n, res >= 1);
     }
 
+    // Sur la TV, Retour sur l’accueil (rien d’ouvert) : un message, puis un 2e appui ferme le launcher.
+    _remote(k) {
+      if (onTV && k === "back" && this._canQuit()) {
+        if (Date.now() - (this._quitAt || 0) < 2500) {
+          this._quitAt = 0;
+          document.documentElement.classList.add("v-quit");
+          setTimeout(() => quitLauncher().then((ok) => { if (!ok) document.documentElement.classList.remove("v-quit"); }), 260);
+        } else {
+          this._quitAt = Date.now();
+          toast("Appuie encore sur Retour pour fermer le launcher");
+        }
+        return;
+      }
+      this._quitAt = 0;
+      super._remote(k);
+    }
+
+    _canQuit() {
+      const s = this.state || {};
+      const N = this._nav || {};
+      return N.view === "home" && s.focus !== "hub" && !s.launch && !s.sys && !s.edit && !this._fx;
+    }
+
     // Retour pendant l’ouverture (l’appli tarde à s’afficher) : on revient à l’accueil.
     _back(el) {
       if (onTV && this._fx) { clearTimeout(this._tvT); this._resume(); return; }
@@ -232,7 +255,7 @@ export function makeBoards(html) {
       const n = HDMI[id];
       this._srcP = n ? video.full(n) : null;
       const go = n ? () => this._openSource(n)
-        : id === "tizen" ? tizenHome
+        : id === "tizen" ? quitLauncher
         : id === "smartthings" ? () => launchApp("smartthings")
         : null;
       if (!go) return;

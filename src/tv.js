@@ -190,3 +190,15 @@ export async function tizenHome() {
   try { T.application.getCurrentApplication().hide(); return true; } catch (e) { return false; }
 }
 
+// Fermer complètement le launcher : l’accueil Samsung s’ouvre, puis le launcher s’arrête
+// (il faudra le rouvrir depuis la liste des applis Samsung).
+export async function quitLauncher() {
+  if (!onTV) return false;
+  note("fermeture du launcher");
+  try { await withTimeout(launchApp("tizen"), 2500, "accueil Samsung"); } catch (e) {}
+  try { T.application.getCurrentApplication().exit(); return true; } catch (e) {
+    note("fermeture impossible : " + ((e && (e.name || e.message)) || e));
+    return false;
+  }
+}
+
