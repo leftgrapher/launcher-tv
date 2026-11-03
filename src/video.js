@@ -32,13 +32,29 @@ function webapis() {
 }
 
 let plane = null;
+// La TV affiche la vidéo dans la zone de cet élément : sa taille doit être dans son propre attribut style
+// (une classe CSS ne suffit pas : sans taille, l’élément garde sa taille par défaut, toute petite, en haut à gauche).
+const FULL = "position:fixed;left:0px;top:0px;width:1920px;height:1080px;";
 function planeEl() {
   if (plane) return plane;
   plane = document.createElement("object");
   plane.type = "application/avplayer";
   plane.className = "vplane";
+  plane.setAttribute("style", FULL);
+  plane.setAttribute("width", "1920");
+  plane.setAttribute("height", "1080");
   document.body.insertBefore(plane, document.body.firstChild);
   return plane;
+}
+
+// Zone d’affichage en coordonnées 1920×1080 (celles qu’attend le lecteur, quelle que soit la taille de la page).
+function fullRect(av) {
+  const k = 1920 / (window.innerWidth || 1920);
+  const r = plane.getBoundingClientRect();
+  const x = Math.round(r.left * k), y = Math.round(r.top * k);
+  const w = Math.round((r.width || 1920 / k) * k), h = Math.round((r.height || 1080 / k) * k);
+  av.setDisplayRect(x, y, w, h);
+  return x + "," + y + " " + w + "×" + h;
 }
 
 const player = { url: null, gen: 0 };
@@ -90,11 +106,14 @@ function play(url) {
         onbufferingcomplete: () => {},
         onevent: () => {}
       });
-      av.setDisplayRect(0, 0, 1920, 1080);
-      try { av.setDisplayMethod("PLAYER_DISPLAY_MODE_FULL_SCREEN"); } catch (e) {}
       try { av.setStreamingProperty("SET_MODE_4K", "TRUE"); } catch (e) {}
+      const zone = fullRect(av);
+      try { av.setDisplayMethod("PLAYER_DISPLAY_MODE_FULL_SCREEN"); } catch (e) {}
+      if (!player.noted) { player.noted = true; note("fond 4K : zone " + zone + " (page " + window.innerWidth + "×" + window.innerHeight + ")"); }
       av.prepareAsync(() => {
         if (g !== player.gen) return;
+        // Zone redonnée une fois le clip prêt : certaines TV la recalculent à la préparation.
+        try { fullRect(av); } catch (e) {}
         try { av.play(); } catch (e) { fail(e); }
       }, fail);
     } catch (e) {
