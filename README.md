@@ -85,13 +85,15 @@ Sans clé TMDB, l’accueil garde ses exemples. Attention : `recos.json` est en 
 
 | Élément | Sur la TV |
 |---|---|
-| Tuiles d’applis | Ouvrent la vraie appli (identifiants connus, sinon recherche par nom parmi les applis installées). Si elle n’est pas trouvée : message, et retour à l’accueil. |
+| Tuiles d’applis | Ouvrent la vraie appli (identifiants connus, sinon recherche par nom parmi les applis installées), lancée dès l’appui pendant que la tuile grandit jusqu’au plein écran et prend l’allure de l’écran de démarrage de l’appli. Si elle n’est pas trouvée : message, et retour à l’accueil. |
 | YouTube | Ouvre TizenBrew (régler TizenBrew pour lancer TizenTube automatiquement). « YouTube, appli officielle » ouvre l’appli Samsung. |
-| PS5, Switch, Mac, PC | Basculent sur HDMI 1, 2, 3, 4. Si la TV refuse, le menu Sources s’ouvre. |
+| PS5, Switch, Mac, PC | Basculent sur HDMI 1, 2, 3, 4 : l’image en direct apparaît sous la tuile qui grandit, puis l’écran TV de Samsung prend le relais. Si la TV refuse, le menu Sources s’ouvre. |
+| Aperçu d’une source | Tuile PS5 ou Switch sélectionnée quelques secondes : son image en direct s’affiche dans la tuile (la TV bascule sur cette entrée, son compris). Les applis, elles, ne peuvent pas être montrées en direct (Tizen ne donne pas l’image d’une autre appli). |
+| Fonds des recos | En vraie 4K quand TMDB a l’image en 3840 px : un clip vidéo d’une image, préparé en ligne avec les recos (`tools/bg4k.mjs`), joué sous l’interface par le lecteur de la TV (`src/video.js`). Ailleurs, l’image 1920×1080. |
 | Ajouter une appli | Ouvre le store Samsung. |
 | Réglages | Ouvrent le vrai panneau de réglages Samsung, par-dessus le launcher. |
 | Hub > Accueil Tizen | Ouvre l’accueil Samsung d’origine. |
-| Retour dans le launcher | L’écran de l’appli se referme dans sa tuile. |
+| Retour dans le launcher | L’accueil réapparaît en fondu. |
 | Ordre des applis (mode modifier) | Gardé d’un allumage à l’autre. |
 
 Encore simulé (prévu plus tard) : Hue Sync et l’éclairage, Wi-Fi et Bluetooth, modes vidéo/jeu, « Tout éteindre », recos de jeux, météo, ouverture directe d’une série dans son appli.
@@ -105,6 +107,8 @@ Touche **Info** de la télécommande (ou « i » au clavier) : affiche le journa
 - `src/boards/` : les deux écrans de la maquette (accueil, hub), générés depuis Claude Design par `tools/convert.py`. Ne pas modifier à la main.
 - `src/tv-boards.js` : ce qui relie la maquette à la TV (ouvrir une appli, une entrée HDMI, les réglages…).
 - `src/tv.js` : identifiants des applis Samsung et appels Tizen.
+- `src/launch-fx.js` : animation d’ouverture sur la TV (la tuile qui grandit jusqu’au plein écran).
+- `src/video.js` : plan vidéo de la TV (fonds 4K, image en direct des entrées HDMI).
 - `src/app.js` : assemblage, mise à l’échelle 1920×1080, messages, journal.
 - `tv/` : coquille de l’appli TV (`config.xml`, page de démarrage et de mise à jour, icône).
 - `public/assets/` : images publiques. `private/assets/` : fichiers qui ne vont jamais en ligne.

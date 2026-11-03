@@ -1,0 +1,330 @@
+// Plan vidéo de la TV : la seule surface que la TV affiche en vraie 4K (l’interface web, elle, est dessinée en 1920×1080).
+// Il sert à deux choses, jamais en même temps :
+//  1. les fonds 4K : un court clip HEVC d’une seule image (préparé en ligne avec les recos) joué sous l’interface ;
+//     l’image 1080p de la planche s’efface en fondu par-dessus, puis revient avant chaque changement de programme ;
+//  2. l’image en direct d’une entrée HDMI : dans la tuile sélectionnée (aperçu) ou en plein écran (ouverture de la source).
+// Hors TV (navigateur), rien ne se passe : la planche garde ses images.
+import { onTV, note, setHdmi } from "./tv.js";
+
+const T = typeof window !== "undefined" ? window.tizen : undefined;
+const html = typeof document !== "undefined" ? document.documentElement : null;
+const cls = (name, on) => { if (html) html.classList.toggle(name, !!on); };
+
+const FADE = 900;     // durée du fondu des images de fond dans la planche (transition opacity 900ms)
+const DWELL = 700;    // on attend que le programme affiché se stabilise avant de charger sa version 4K
+
+// ── Lecteur AVPlay (webapis) ─────────────────────────────────
+
+let apisP = null;
+function webapis() {
+  if (apisP) return apisP;
+  apisP = new Promise((res, rej) => {
+    if (window.webapis && window.webapis.avplay) return res(window.webapis);
+    const s = document.createElement("script");
+    s.src = "$WEBAPIS/webapis/webapis.js";
+    const t = setTimeout(() => rej(new Error("webapis : pas de réponse")), 5000);
+    s.onload = () => { clearTimeout(t); window.webapis && window.webapis.avplay ? res(window.webapis) : rej(new Error("lecteur vidéo absent")); };
+    s.onerror = () => { clearTimeout(t); rej(new Error("webapis introuvable")); };
+    document.head.appendChild(s);
+  });
+  apisP.catch((e) => note("fonds 4K désactivés : " + e.message));
+  return apisP;
+}
+
+let plane = null;
+function planeEl() {
+  if (plane) return plane;
+  plane = document.createElement("object");
+  plane.type = "application/avplayer";
+  plane.className = "vplane";
+  document.body.insertBefore(plane, document.body.firstChild);
+  return plane;
+}
+
+const player = { url: null, gen: 0 };
+
+function closePlayer() {
+  player.gen++;
+  player.url = null;
+  const av = window.webapis && window.webapis.avplay;
+  if (!av) return;
+  try { av.stop(); } catch (e) {}
+  try { av.close(); } catch (e) {}
+}
+
+// Ouvre le clip et s’arrête sur sa première image. Résout quand l’image est à l’écran (sous l’interface).
+function play(url) {
+  return webapis().then((w) => new Promise((res, rej) => {
+    closePlayer();
+    const g = ++player.gen;
+    const av = w.avplay;
+    planeEl();
+    let done = false;
+    const ready = () => {
+      if (done || g !== player.gen) return;
+      done = true;
+      clearTimeout(timer);
+      player.url = url;
+      res();
+    };
+    const fail = (e) => {
+      if (done) return;
+      done = true;
+      clearTimeout(timer);
+      rej(e instanceof Error ? e : new Error(String((e && (e.name || e.message)) || e)));
+    };
+    const timer = setTimeout(() => fail(new Error("pas d’image au bout de 6 s")), 6000);
+    try {
+      av.open(url);
+      av.setListener({
+        // Première image affichée : on fige le clip dessus (en pause, l’image reste à l’écran).
+        oncurrentplaytime: (t) => {
+          if (done || !(t > 0)) return;
+          setTimeout(() => { try { if (g === player.gen) av.pause(); } catch (e) {} ready(); }, 80);
+        },
+        // Clip terminé sans arrêt : la dernière image reste affichée.
+        onstreamcompleted: () => ready(),
+        onerror: (e) => fail(new Error("lecture : " + e)),
+        onbufferingstart: () => {},
+        onbufferingprogress: () => {},
+        onbufferingcomplete: () => {},
+        onevent: () => {}
+      });
+      av.setDisplayRect(0, 0, 1920, 1080);
+      try { av.setDisplayMethod("PLAYER_DISPLAY_MODE_FULL_SCREEN"); } catch (e) {}
+      try { av.setStreamingProperty("SET_MODE_4K", "TRUE"); } catch (e) {}
+      av.prepareAsync(() => {
+        if (g !== player.gen) return;
+        try { av.play(); } catch (e) { fail(e); }
+      }, fail);
+    } catch (e) {
+      fail(e);
+    }
+  }));
+}
+
+// ── Fonds 4K ─────────────────────────────────────────────────
+// Classes posées sur <html> :
+//  v-under : la page est transparente sous le programme (fond de la planche, décor dessiné) → on voit le plan vidéo ;
+//  v-hero  : l’image 1080p du programme affiché s’efface (fondu de 900 ms) → la 4K apparaît.
+
+const bg = { want: null, shown: null, failed: {}, dwellT: null, tearT: null, waiters: [], gen: 0 };
+let liveOn = false;
+
+export function wantBg(url) {
+  if (!onTV) return;
+  url = url || null;
+  if (bg.failed[url]) url = null;
+  if (url === bg.want) return;
+  bg.want = url;
+  stepBg();
+}
+
+function flush() {
+  const w = bg.waiters;
+  bg.waiters = [];
+  w.forEach((f) => f());
+}
+
+function stepBg() {
+  clearTimeout(bg.dwellT);
+  const g = ++bg.gen;
+  const want = liveOn ? null : bg.want;
+  // Déjà en train de repasser en 1080p : on attend la fin du fondu, puis on reprend d’ici.
+  if (bg.tearT) return;
+  if (bg.shown && bg.shown === want) { cls("v-hero", true); return; }
+  if (bg.shown) {
+    // Changement de programme : la nouvelle image 1080p arrive en fondu par-dessus la 4K, puis on coupe le lecteur.
+    cls("v-hero", false);
+    bg.tearT = setTimeout(() => {
+      bg.tearT = null;
+      closePlayer();
+      bg.shown = null;
+      cls("v-under", false);
+      flush();
+      stepBg();
+    }, FADE + 60);
+    return;
+  }
+  if (!want) { flush(); return; }
+  bg.dwellT = setTimeout(() => {
+    if (g !== bg.gen) return;
+    play(want).then(() => {
+      if (g !== bg.gen || bg.want !== want || liveOn) { closePlayer(); return; }
+      bg.shown = want;
+      cls("v-under", true);
+      cls("v-hero", true);
+      note("fond 4K affiché");
+    }, (e) => {
+      bg.failed[want] = true;
+      note("fond 4K : " + e.message);
+      if (g === bg.gen) closePlayer();
+    });
+  }, DWELL);
+}
+
+// Coupe tout, sans fondu (l’appli passe en arrière-plan, ou une source HDMI prend le plan vidéo) :
+// l’image 1080p (la même) revient d’un coup, sans laisser voir le décor dessiné le temps d’un fondu.
+function dropBg() {
+  clearTimeout(bg.dwellT);
+  clearTimeout(bg.tearT);
+  bg.tearT = null;
+  bg.gen++;
+  closePlayer();
+  bg.shown = null;
+  if (html && html.classList.contains("v-hero")) {
+    cls("v-snap", true);
+    cls("v-hero", false);
+    cls("v-under", false);
+    void html.offsetWidth;
+    requestAnimationFrame(() => requestAnimationFrame(() => cls("v-snap", false)));
+  } else {
+    cls("v-hero", false);
+    cls("v-under", false);
+  }
+  flush();
+}
+
+// Le plan vidéo est rendu à la source HDMI : la 4K repasse en image 1080p (en fondu, ou d’un coup si « now »),
+// et le lecteur est coupé avant que la source ne s’affiche.
+function yieldBg(now) {
+  liveOn = true;
+  if (now || !bg.shown) { dropBg(); return Promise.resolve(); }
+  return new Promise((res) => {
+    bg.waiters.push(res);
+    stepBg();
+  });
+}
+
+function resumeBg() {
+  liveOn = false;
+  stepBg();
+}
+
+if (onTV && typeof document !== "undefined") {
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) { dropBg(); return; }
+    stepBg();
+  });
+}
+
+// ── Image en direct d’une entrée HDMI ────────────────────────
+
+const live = { mode: null, n: null, gen: 0 };
+const hasTvWindow = () => !!(T && T.tvwindow && T.tvwindow.show);
+
+function tvShow(r, z) {
+  return new Promise((res, rej) => {
+    try {
+      T.tvwindow.show(res, rej, [Math.round(r.x) + "px", Math.round(r.y) + "px", Math.round(r.w) + "px", Math.round(r.h) + "px"], "MAIN", z);
+    } catch (e) { rej(e); }
+  });
+}
+
+function tvHide() {
+  try { T.tvwindow.hide(() => {}, () => {}, "MAIN"); } catch (e) {}
+}
+
+// Y a-t-il une image sur cette entrée ? (console en veille : non). Sans moyen de le savoir, on suppose que oui.
+function signal(ms) {
+  if (!T.tvwindow.getVideoResolution) return new Promise((res) => setTimeout(() => res(true), 700));
+  const end = Date.now() + ms;
+  return new Promise((res) => {
+    const ask = () => {
+      try {
+        T.tvwindow.getVideoResolution((v) => {
+          if (v && v.width > 0 && v.height > 0) return res(true);
+          if (Date.now() > end) return res(false);
+          setTimeout(ask, 250);
+        }, () => (Date.now() > end ? res(false) : setTimeout(ask, 250)), "MAIN");
+      } catch (e) { res(true); }
+    };
+    ask();
+  });
+}
+
+const err = (e) => ((e && ((e.name || "") + " " + (e.message || "")).trim()) || String(e));
+
+// Aperçu en direct dans une tuile (rect en coordonnées 1920×1080). Résout true si l’image est affichée.
+export async function preview(n, rect) {
+  if (!onTV || !hasTvWindow()) return false;
+  const g = ++live.gen;
+  live.mode = "preview";
+  live.n = n;
+  try {
+    await yieldBg(false);
+    if (g !== live.gen) return false;
+    await setHdmi(n);
+    if (g !== live.gen) return false;
+    if (!(await signal(2200))) {
+      note("aperçu HDMI " + n + " : pas d’image (appareil éteint ?)");
+      if (g === live.gen) { live.mode = null; resumeBg(); }
+      return false;
+    }
+    if (g !== live.gen) return false;
+    await tvShow(rect, "FRONT");
+    if (g !== live.gen) { tvHide(); return false; }
+    note("aperçu en direct HDMI " + n);
+    return true;
+  } catch (e) {
+    note("aperçu HDMI " + n + " : " + err(e));
+    if (g === live.gen) { live.mode = null; resumeBg(); }
+    return false;
+  }
+}
+
+export function stopPreview() {
+  if (live.mode !== "preview") return;
+  live.gen++;
+  live.mode = null;
+  tvHide();
+  resumeBg();
+}
+
+// Ouverture d’une source : son image en direct en plein écran, sous l’interface.
+// Renvoie 2 si l’image est là (la page peut devenir transparente pour la laisser voir),
+// 1 si la source est choisie mais sans image à montrer, 0 si la source n’a pas pu être choisie.
+export async function full(n) {
+  if (!onTV || !hasTvWindow()) return 0;
+  const g = ++live.gen;
+  const already = live.mode === "preview" && live.n === n;
+  live.mode = "full";
+  live.n = n;
+  let set = already;
+  try {
+    await yieldBg(true);
+    if (!already) {
+      await setHdmi(n);
+      set = true;
+      if (!(await signal(1600))) { note("HDMI " + n + " : pas encore d’image"); return 1; }
+    }
+    if (g !== live.gen) return 1;
+    await tvShow({ x: 0, y: 0, w: 1920, h: 1080 }, "BEHIND");
+    return g === live.gen ? 2 : 1;
+  } catch (e) {
+    note("image en direct HDMI " + n + " : " + err(e));
+    return set ? 1 : 0;
+  }
+}
+
+// Retour dans le launcher : plus d’image en direct, l’interface redevient opaque, les fonds 4K reprennent.
+export function releaseLive() {
+  if (!live.mode && !html.classList.contains("v-full")) { if (liveOn) resumeBg(); return; }
+  live.gen++;
+  live.mode = null;
+  if (hasTvWindow()) tvHide();
+  if (html.classList.contains("v-full")) {
+    cls("v-full", false);
+    // L’interface réapparaît en fondu.
+    cls("v-return", true);
+    setTimeout(() => cls("v-return", false), 400);
+  }
+  resumeBg();
+}
+
+export function revealPage() { cls("v-full", true); }
+
+// Pour le panneau Info.
+export function videoState() {
+  return (bg.shown ? "fond 4K affiché" : bg.want ? "fond 4K en attente" : "pas de fond 4K") + (live.mode ? " · HDMI " + live.n + " en direct (" + live.mode + ")" : "");
+}

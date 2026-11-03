@@ -187,10 +187,13 @@ export function imagesFor(d, lang) {
   const short = (lang || "fr").slice(0, 2);
   const logos = (imgs.logos || []).filter((l) => /\.png$/i.test(l.file_path));
   const logo = logos.filter((l) => l.iso_639_1 === short).sort(byVotes)[0] || logos.filter((l) => l.iso_639_1 === "en").sort(byVotes)[0];
+  // Version 4K (fond sans texte d’au moins 3840 px) : convertie en clip vidéo pour le plan vidéo de la TV (tools/bg4k.mjs).
+  const uhd = backs.filter((b) => !b.iso_639_1 && b.width >= 3840 && Math.abs(b.width / b.height - 16 / 9) < 0.02).sort(byVotes)[0];
   return {
     backdrop: backPath ? IMG + (back ? heroSize : "w1280") + backPath : null,
     thumb: backPath ? IMG + "w780" + backPath : null,
-    logo: logo ? IMG + "w500" + logo.file_path : null
+    logo: logo ? IMG + "w500" + logo.file_path : null,
+    uhd: uhd ? IMG + "original" + uhd.file_path : null
   };
 }
 

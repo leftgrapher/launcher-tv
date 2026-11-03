@@ -152,16 +152,21 @@ export async function launchApp(key) {
   return false;
 }
 
+// Choisit l’entrée HDMI n comme source principale de la TV (sans encore l’afficher).
+export async function setHdmi(n) {
+  const info = await withTimeout(new Promise((res, rej) => T.systeminfo.getPropertyValue("VIDEOSOURCE", res, rej)), 4000, "sources");
+  const all = (info.connected || []).concat(info.disconnected || []);
+  const src = all.find((s) => s.type === "HDMI" && s.number === n);
+  if (!src) throw new Error("HDMI " + n + " introuvable");
+  await withTimeout(new Promise((res, rej) => T.tvwindow.setSource(src, res, rej, "MAIN")), 4000, "HDMI");
+}
+
 // Bascule la TV sur une entrée HDMI, puis ouvre l’écran TV de Samsung sur cette source (mode jeu, VRR… restent ceux de la TV).
-// Si la TV refuse, on ouvre le menu Sources de Samsung.
-export async function showSource(n) {
+// Si la TV refuse, on ouvre le menu Sources de Samsung. « dejaChoisie » : la source a déjà été choisie (image en direct affichée).
+export async function showSource(n, dejaChoisie) {
   if (!onTV) return false;
   try {
-    const info = await withTimeout(new Promise((res, rej) => T.systeminfo.getPropertyValue("VIDEOSOURCE", res, rej)), 4000, "sources");
-    const all = (info.connected || []).concat(info.disconnected || []);
-    const src = all.find((s) => s.type === "HDMI" && s.number === n);
-    if (!src) throw new Error("HDMI " + n + " introuvable");
-    await withTimeout(new Promise((res, rej) => T.tvwindow.setSource(src, res, rej, "MAIN")), 4000, "HDMI");
+    if (!dejaChoisie) await setHdmi(n);
     note("source HDMI " + n + " choisie");
     // Puis on ouvre l’écran TV de Samsung, qui affiche la source choisie (comme les autres launchers Tizen).
     try {

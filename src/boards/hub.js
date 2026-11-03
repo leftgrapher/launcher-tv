@@ -138,7 +138,7 @@ ${(r?.isAide) ? html`<svg width="28" height="28" viewBox="0 0 24 24" fill="none"
 ` : null}
 
 ${(v?.launch?.on) ? html`
-<button type="button" aria-label="Revenir au hub" onClick="${v?.launch?.back}" style="position: absolute; z-index: 30; left: 0; top: 0; width: 1920px; height: 1080px; clip-path: ${v?.launch?.clip}; -webkit-clip-path: ${v?.launch?.clip}; background: ${v?.launch?.bg}; opacity: ${v?.launch?.opacity}; overflow: hidden; cursor: pointer; transition: ${v?.launch?.transition}; will-change: clip-path">
+<button type="button" data-launch-overlay="1" aria-label="Revenir au hub" onClick="${v?.launch?.back}" style="position: absolute; z-index: 30; left: 0; top: 0; width: 1920px; height: 1080px; clip-path: ${v?.launch?.clip}; -webkit-clip-path: ${v?.launch?.clip}; background: ${v?.launch?.bg}; opacity: ${v?.launch?.opacity}; overflow: hidden; cursor: pointer; transition: ${v?.launch?.transition}; will-change: clip-path">
 <div style="position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; color: #F5F5F7; opacity: ${v?.launch?.contentOpacity}; transform: scale(${v?.launch?.contentScale}); transition: ${v?.launch?.contentTransition}">
 <span style="font-size: 56px; font-weight: 700; letter-spacing: -0.02em">${v?.launch?.name}</span>
 <span style="margin-top: -10px; font-size: 22px; font-weight: 400; opacity: 0.8">${v?.launch?.sub}</span>

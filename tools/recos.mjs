@@ -8,6 +8,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import * as L from "./recos-lib.mjs";
+import { prepare4k } from "./bg4k.mjs";
 
 const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");
 const cfg = JSON.parse(fs.readFileSync(process.env.RECOS_CONFIG || path.join(root, "launcher.config.json"), "utf8")).recos || {};
@@ -392,10 +393,15 @@ async function main() {
       backdrop: img.backdrop,
       thumb: img.thumb,
       logo: img.logo,
+      uhd: img.uhd,
       trailer: trailer ? trailer.key : null,
       score: Math.round(c.score)
     };
   }).filter((it) => it.backdrop);
+
+  // Fonds 4K (image 1920 + clip vidéo 3840×2160) pour le plan vidéo de la TV.
+  const dataDir = path.dirname(OUT);
+  await prepare4k(items, { siteDir: path.dirname(dataDir), outDir: path.join(dataDir, "bg"), cacheDir: path.join(path.dirname(CACHE), "bg"), log });
 
   const out = {
     generatedAt: new Date().toISOString(),

@@ -8,6 +8,7 @@ import { cssAssets } from "./assets.js";
 import { makeBoards } from "./tv-boards.js";
 import { onTV, log, note, diagnostics } from "./tv.js";
 import { cachedRecos, fetchRecos, heroItems } from "./recos.js";
+import { videoState } from "./video.js";
 
 const html = htm.bind(h);
 const { Main, Hub, mainDefaults, hubDefaults } = makeBoards(html);
@@ -51,9 +52,33 @@ const PERF_CSS = `
 `;
 const PERF = cfg.perf != null ? !!cfg.perf : onTV;
 
+// Sur la TV : ouverture des applis (launch-fx.js) et plan vidéo sous l’interface (video.js).
+// Le décor du programme ne bouge plus (effet Ken Burns retiré) : l’image 4K qui le remplace est fixe, et c’est un
+// grand calque animé en moins pour la TV.
+const TV_CSS = `
+.vplane{position:fixed;left:0;top:0;width:1920px;height:1080px}
+[data-herobg],[data-herobase]{animation:none!important}
+[data-launcher] [data-launch-overlay],html.lfx-hub [data-hub] [data-launch-overlay]{display:none!important}
+.lfx{position:absolute;left:0;top:0;width:1920px;height:1080px;z-index:40;pointer-events:none;overflow:hidden}
+.lfx-card{position:absolute;left:0;top:0;width:1920px;height:1080px;transform-origin:0 0;overflow:hidden;will-change:transform}
+.lfx-tint{position:absolute;left:0;top:0;right:0;bottom:0;opacity:0;will-change:opacity}
+.lfx-face{position:absolute!important;transform-origin:50% 50%!important;background:transparent!important;border-color:transparent!important;
+  box-shadow:none!important;animation:none!important;transition:none!important;scale:none!important;rotate:none!important;margin:0!important;will-change:transform}
+.lfx-hide{opacity:0!important;transition:none!important;animation:none!important}
+html.v-under,html.v-under body{background:transparent!important}
+html.v-under [data-launcher]{background:transparent!important}
+html.v-under [data-herobase]{visibility:hidden}
+html.v-hero [data-herobg="1"]{opacity:0!important}
+html.v-snap [data-herobg]{transition:none!important}
+html.v-full,html.v-full body{background:transparent!important}
+html.v-full .board{visibility:hidden}
+html.v-return .board{animation:vReturn 320ms ease both}
+@keyframes vReturn{from{opacity:0}to{opacity:1}}
+`;
+
 function injectCss() {
   const el = document.createElement("style");
-  el.textContent = cssAssets(APP_CSS + "\n" + boardsCss + (PERF ? "\n" + PERF_CSS : ""));
+  el.textContent = cssAssets(APP_CSS + "\n" + boardsCss + (PERF ? "\n" + PERF_CSS : "") + (onTV ? "\n" + TV_CSS : ""));
   document.head.appendChild(el);
 }
 
@@ -86,7 +111,7 @@ class App extends Component {
   constructor() {
     super();
     const cached = cachedRecos();
-    this.state = { hub: null, hubKey: 0, toast: null, log: false, recosData: cached, recos: cached ? heroItems(cached) : null };
+    this.state = { hub: null, hubKey: 0, toast: null, log: false, recosData: cached, recos: cached ? heroItems(cached, DATA_BASE) : null };
   }
 
   // Recos : au démarrage, au retour dans le launcher et toutes les 30 minutes (elles changent toutes les 6 h en ligne).
@@ -95,7 +120,7 @@ class App extends Component {
     fetchRecos(DATA_BASE).then((data) => {
       const cur = this.state.recosData;
       if (cur && cur.generatedAt === data.generatedAt) return;
-      this.setState({ recosData: data, recos: heroItems(data) });
+      this.setState({ recosData: data, recos: heroItems(data, DATA_BASE) });
     }).catch(() => {});
   }
 
@@ -153,6 +178,7 @@ class App extends Component {
       (onTV ? "TV Samsung (Tizen)" : "Aperçu navigateur") + (PERF ? " · mode TV allégé" : "") + " · version " + ((window.__LAUNCHER__ || {}).running || "aperçu"),
       "Écran : " + window.innerWidth + "×" + window.innerHeight + " · densité " + window.devicePixelRatio + " · écran " + screen.width + "×" + screen.height + " · " + perf.fps + " images/s",
       "Moteur : " + ((/Chrome\/[\d.]+/.exec(navigator.userAgent) || [""])[0] || navigator.userAgent.slice(0, 60)),
+      "Vidéo : " + videoState(),
       "Tizen : " + (d.tizen ? "oui" : "non") + " · lancement d’applis : " + (d.application ? "oui" : "non") + (d.apps != null ? " · " + d.apps + " applis vues" + (d.appsError ? " (" + d.appsError + ")" : "") : ""),
       "",
       log.length ? log.slice(-14).join("\n") : "Rien pour l’instant.",

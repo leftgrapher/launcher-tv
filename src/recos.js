@@ -18,10 +18,12 @@ export async function fetchRecos(base) {
 }
 
 // Format attendu par l’écran d’accueil (planche Main) : titre, appli, raison, détail, images.
-export function heroItems(data) {
+// Les fonds préparés en ligne (image 1920 et clip 4K) ont une adresse relative au site : on la complète.
+export function heroItems(data, base) {
+  const abs = (u) => (!u || /^[a-z]+:/i.test(u) ? u : (base || "") + u);
   return ((data && data.items) || []).map((it) => ({
     id: it.id, kind: it.kind, tmdb: it.tmdb,
     title: it.title, app: it.app, reason: it.reason, detail: it.detail,
-    backdrop: it.backdrop, thumb: it.thumb, logo: it.logo
+    backdrop: abs(it.backdrop), thumb: abs(it.thumb), logo: abs(it.logo), bg4k: abs(it.bg4k) || null
   }));
 }

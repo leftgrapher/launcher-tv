@@ -4,7 +4,9 @@
 import { Component } from "preact";
 import * as MainBoard from "./boards/main.js";
 import * as HubBoard from "./boards/hub.js";
-import { onTV, launchApp, showSource, tizenHome, HDMI, store } from "./tv.js";
+import { onTV, launchApp, showSource, tizenHome, HDMI, store, note } from "./tv.js";
+import { openFx, rectIn } from "./launch-fx.js";
+import * as video from "./video.js";
 
 function boardBase(mod, html) {
   return class DCLogic extends Component {
@@ -33,14 +35,23 @@ export function makeBoards(html) {
 
     componentDidMount() {
       super.componentDidMount();
-      this._onVis = () => { if (!document.hidden) this._resume(); };
+      this._onVis = () => {
+        if (document.hidden) {
+          // L’appli passe derrière une autre : l’aperçu en direct s’arrête (il sera relancé au retour).
+          if (this._pvFor) { this._pvFor = null; video.stopPreview(); }
+          return;
+        }
+        this._resume();
+      };
       document.addEventListener("visibilitychange", this._onVis);
+      this._tvVideo();
     }
 
     componentWillUnmount() {
       super.componentWillUnmount();
       document.removeEventListener("visibilitychange", this._onVis);
       clearTimeout(this._tvT);
+      clearTimeout(this._safeT);
     }
 
     componentDidUpdate(prevProps, prevState) {
@@ -51,6 +62,36 @@ export function makeBoards(html) {
       if (json !== this._savedJson) {
         this._savedJson = json;
         store.save(SAVED, keep);
+      }
+      this._tvVideo();
+    }
+
+    // Plan vidéo de la TV : fond 4K du programme affiché, ou image en direct de la source HDMI sélectionnée.
+    _tvVideo() {
+      if (!onTV) return;
+      const s = this.state || {};
+      const N = this._nav || {};
+      const view = N.view;
+      const calm = !s.launch && !s.sys && !s.edit && !this._fx && !document.hidden && !(remote() && remote() !== "main");
+      let cur = null;
+      try { cur = N.progFor && N.idx != null ? N.progFor(N.idx) : null; } catch (e) {}
+      video.wantBg(calm && (view === "home" || view === "hero") && cur && cur.bg4k ? cur.bg4k : null);
+      // Aperçu : quand la tuile d’une source HDMI reste sélectionnée (comme l’aperçu en image des applis),
+      // son image en direct s’affiche dans la tuile.
+      const f = s.focus || s.lastOpen;
+      const n = HDMI[f];
+      const want = calm && !!n && s.peek === f && view === "home" && this.props.apercuDirect !== false;
+      if (want && this._pvFor !== f) {
+        const el = document.querySelector('[data-tile="' + f + '"]');
+        if (!el) return;
+        this._pvFor = f;
+        // Un peu en retrait des bords : l’image en direct est rectangulaire, la tuile a des coins arrondis.
+        const r = rectIn(el);
+        const k = 7 * (r.w / (el.offsetWidth || r.w));
+        video.preview(n, { x: r.x + k, y: r.y + k, w: r.w - 2 * k, h: r.h - 2 * k });
+      } else if (!want && this._pvFor) {
+        this._pvFor = null;
+        video.stopPreview();
       }
     }
 
@@ -66,26 +107,53 @@ export function makeBoards(html) {
       launchApp("reglages").then((ok) => { if (!ok) super._openSys(); });
     }
 
-    // Sur la TV, l’appli s’ouvre par-dessus : la tuile grandit et passe au noir, sans texte (pas d’écran « factice »).
-    _tvSplash() {
-      this.setState((s) => (s.launch ? { launch: Object.assign({}, s.launch, { name: "", sub: "", hint: "", endBg: "#000000" }) } : {}));
+    // Sur la TV, l’écran de lancement de la maquette est remplacé par la tuile qui s’agrandit (launch-fx.js),
+    // et l’appli est lancée tout de suite, pendant l’animation.
+    _startFx(el, opts) {
+      if (this._fx) this._fx.close(true);
+      this._fx = null;
+      try { this._fx = openFx(el, opts); } catch (e) { note("animation d’ouverture : " + e.message); }
     }
 
     _launch(it, el) {
       const before = this._memo();
       super._launch(it, el);
       if (!onTV || it.sys) return;
-      this._tvSplash();
       const key = it.add || it.installed === false ? "store" : it.id;
-      this._goOut(() => (HDMI[key] ? showSource(HDMI[key]) : launchApp(key)), it.add ? "Le store Samsung" : it.name, before);
+      // Source HDMI : son image en direct est demandée tout de suite (si elle était déjà en aperçu dans la tuile, elle passe
+      // directement en plein écran, sous l’écran qui grandit).
+      this._srcP = HDMI[key] ? video.full(HDMI[key]) : null;
+      this._startFx(el, { id: it.id });
+      this._goOut(() => (HDMI[key] ? this._openSource(HDMI[key]) : launchApp(key)), it.add ? "Le store Samsung" : it.name, before);
     }
 
     _launchHero(r, el) {
       const before = this._memo();
       super._launchHero(r, el);
       if (!onTV) return;
-      this._tvSplash();
-      this._goOut(() => (HDMI[r.app] ? showSource(HDMI[r.app]) : launchApp(r.app)), r.name, before);
+      this._srcP = HDMI[r.app] ? video.full(HDMI[r.app]) : null;
+      this._startFx(el, { id: r.app, image: r.backdrop || null });
+      this._goOut(() => (HDMI[r.app] ? this._openSource(HDMI[r.app]) : launchApp(r.app)), r.name, before);
+    }
+
+    // Source HDMI : son image en direct passe sous l’écran qui grandit, qui s’efface ensuite pour la laisser voir ;
+    // puis l’écran TV de Samsung prend le relais (mode jeu, VRR).
+    async _openSource(n) {
+      const fx = this._fx;
+      const res = await (this._srcP || video.full(n));
+      this._srcP = null;
+      if (fx) await fx.grown;
+      if (res === 2 && fx === this._fx) {
+        video.revealPage();
+        if (fx) await fx.reveal();
+      }
+      return showSource(n, res >= 1);
+    }
+
+    // Retour pendant l’ouverture (l’appli tarde à s’afficher) : on revient à l’accueil.
+    _back(el) {
+      if (onTV && this._fx) { clearTimeout(this._tvT); this._resume(); return; }
+      super._back(el);
     }
 
     // Ce qui change quand une appli est ouverte (dernière appli, récentes, reco affichée) : remis comme avant si elle ne s’ouvre pas.
@@ -94,25 +162,32 @@ export function makeBoards(html) {
       return { lastOpen: s.lastOpen, recent: s.recent, lastFav: s.lastFav, idx: s.idx };
     }
 
-    // L’écran de lancement s’agrandit (≈ 0,65 s), puis la TV ouvre l’appli. Si elle n’y arrive pas, on revient.
+    // L’appli est lancée presque tout de suite (la tuile grandit pendant ce temps). Si la TV n’y arrive pas, on revient.
+    // Si elle dit l’avoir ouverte mais que rien ne s’affiche, on revient aussi au bout de 8 s.
     _goOut(fn, name, before) {
       clearTimeout(this._tvT);
+      clearTimeout(this._safeT);
       this._tvT = setTimeout(() => {
         fn().then((ok) => {
-          if (ok) return;
+          if (ok) {
+            this._safeT = setTimeout(() => { if (!document.hidden) { note((name || "l’appli") + " ne s’est pas affichée"); this._resume(); } }, 8000);
+            return;
+          }
           toast((name || "Cette appli") + " n’a pas pu s’ouvrir");
           if (before) this.setState(before);
           this._resume();
         });
-      }, 680);
+      }, 90);
     }
 
-    // Retour dans le launcher (après une appli, une source…) : l’écran se referme dans sa tuile.
-    // Retour dans le launcher : l’accueil réapparaît en fondu, sans rejouer l’écran de lancement à l’envers.
+    // Retour dans le launcher (après une appli, une source…) : l’accueil réapparaît en fondu.
     _resume() {
       const s = this.state || {};
+      clearTimeout(this._safeT);
+      if (this._fx) { this._fx.close(); this._fx = null; }
+      if (onTV) video.releaseLive();
       this._armIdle();
-      if (!s.launch) return;
+      if (!s.launch) { this._tvVideo(); return; }
       clearTimeout(this._lt1);
       clearTimeout(this._lt2);
       clearTimeout(this._fadeT);
@@ -127,7 +202,9 @@ export function makeBoards(html) {
       if (typeof window !== "undefined") window.__dcRemote = "hub";
       this._onVis = () => {
         const L = (this.state || {}).launch;
-        if (document.hidden || !L) return;
+        if (document.hidden) return;
+        if (this._fx || document.documentElement.classList.contains("lfx-hub")) this._endFx();
+        if (!L) return;
         clearTimeout(this._lt1);
         clearTimeout(this._lt2);
         this.setState({ launch: Object.assign({}, L, { phase: "fade" }) });
@@ -140,6 +217,8 @@ export function makeBoards(html) {
       super.componentWillUnmount();
       document.removeEventListener("visibilitychange", this._onVis);
       clearTimeout(this._tvT);
+      if (this._fx) this._fx.close(true);
+      if (typeof document !== "undefined") document.documentElement.classList.remove("lfx-hub");
     }
 
     _openSys() {
@@ -150,18 +229,50 @@ export function makeBoards(html) {
     _open(id, el) {
       super._open(id, el);
       if (!onTV) return;
-      this.setState((s) => (s.launch ? { launch: Object.assign({}, s.launch, { name: "", sub: "", bg: "#000000" }) } : {}));
-      const go = HDMI[id] ? () => showSource(HDMI[id])
+      const n = HDMI[id];
+      this._srcP = n ? video.full(n) : null;
+      const go = n ? () => this._openSource(n)
         : id === "tizen" ? tizenHome
         : id === "smartthings" ? () => launchApp("smartthings")
         : null;
       if (!go) return;
+      // Même ouverture que sur l’accueil : le bouton grandit jusqu’au plein écran.
+      const btn = el || document.querySelector('[data-hub-btn="' + id + '"]');
+      if (this._fx) this._fx.close(true);
+      this._fx = null;
+      document.documentElement.classList.add("lfx-hub");
+      try { this._fx = openFx(btn, { id: id, splash: id === "switch" ? "#2A0B0C" : "#0B0C10" }); } catch (e) { note("animation d’ouverture : " + e.message); }
       clearTimeout(this._tvT);
       this._tvT = setTimeout(() => go().then((ok) => {
         if (ok) return;
         toast("La TV n’a pas pu ouvrir « " + ((this._pages()[id] || {}).name || id) + " »");
-        this._close();
-      }), 680);
+        this._endFx();
+        this.setState({ launch: null });
+      }), 90);
+    }
+
+    async _openSource(n) {
+      const fx = this._fx;
+      const res = await (this._srcP || video.full(n));
+      this._srcP = null;
+      if (fx) await fx.grown;
+      if (res === 2 && fx === this._fx) {
+        video.revealPage();
+        if (fx) await fx.reveal();
+      }
+      return showSource(n, res >= 1);
+    }
+
+    // Retour pendant l’ouverture : on revient au hub.
+    _close() {
+      if (onTV && this._fx) { clearTimeout(this._tvT); this._endFx(); this.setState({ launch: null }); return; }
+      super._close();
+    }
+
+    _endFx() {
+      if (this._fx) { this._fx.close(); this._fx = null; }
+      video.releaseLive();
+      setTimeout(() => { if (!this._fx) document.documentElement.classList.remove("lfx-hub"); }, 300);
     }
   }
 

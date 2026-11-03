@@ -18,7 +18,7 @@ export const defaults = {
 export function template(v, html) {
   return html`<div data-launcher="1" onWheel="${v?.onWheel}" onMouseEnter="${v?.claimRemote}" onMouseDown="${v?.claimRemote}" style="position: relative; width: 1920px; height: 1080px; overflow: hidden; background: #05070E; color: #F5F5F7; font-family: 'Inter', system-ui, sans-serif; font-optical-sizing: auto">
 
-<svg aria-hidden="true" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice" style="position: absolute; left: 0; top: 0; width: 100%; height: 100%; transform-origin: 62% 48%; animation: ${v?.kenBurns}; animation-play-state: ${v?.kenPlay}">
+<svg aria-hidden="true" data-herobase="1" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice" style="position: absolute; left: 0; top: 0; width: 100%; height: 100%; transform-origin: 62% 48%; animation: ${v?.kenBurns}; animation-play-state: ${v?.kenPlay}">
 <defs>
 <linearGradient id="main-ciel" x1="0" y1="0" x2="0" y2="1">
 <stop offset="0" style="stop-color: ${v?.s?.sky0}; transition: stop-color 900ms ease"></stop>
@@ -42,7 +42,7 @@ export function template(v, html) {
 </svg>
 ${(v?.heroBgs || []).map((b, $index) => html`
 ${(b?.has) ? html`
-<img aria-hidden="true" alt="" src="${b?.src}" style="position: absolute; left: 0; top: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 30%; opacity: ${b?.opacity}; transition: opacity 900ms ease; transform-origin: 62% 48%; animation: ${v?.kenBurns}; animation-play-state: ${v?.kenPlay}" />
+<img aria-hidden="true" data-herobg="${b?.cur}" alt="" src="${b?.src}" style="position: absolute; left: 0; top: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 30%; opacity: ${b?.opacity}; transition: opacity 900ms ease; transform-origin: 62% 48%; animation: ${v?.kenBurns}; animation-play-state: ${v?.kenPlay}" />
 ` : null}
 `)}
 <div aria-hidden="true" style="position: absolute; inset: 0; opacity: ${v?.photoScrim}; transition: opacity 900ms ease; background: linear-gradient(90deg, rgba(5, 7, 14, 0.55) 0%, rgba(5, 7, 14, 0.18) 42%, rgba(5, 7, 14, 0) 62%), linear-gradient(180deg, rgba(5, 7, 14, 0.35) 0%, rgba(5, 7, 14, 0) 22%)"></div>
@@ -726,7 +726,7 @@ ${(r?.isAide) ? html`<svg width="28" height="28" viewBox="0 0 24 24" fill="none"
 ` : null}
 
 ${(v?.launch?.on) ? html`
-<button type="button" aria-label="Revenir à l’accueil" onClick="${v?.launch?.back}" style="position: absolute; z-index: 30; left: 0; top: 0; width: 1920px; height: 1080px; clip-path: ${v?.launch?.clip}; -webkit-clip-path: ${v?.launch?.clip}; background: ${v?.launch?.bg}; opacity: ${v?.launch?.opacity}; overflow: hidden; cursor: pointer; transition: ${v?.launch?.transition}; will-change: clip-path">
+<button type="button" data-launch-overlay="1" aria-label="Revenir à l’accueil" onClick="${v?.launch?.back}" style="position: absolute; z-index: 30; left: 0; top: 0; width: 1920px; height: 1080px; clip-path: ${v?.launch?.clip}; -webkit-clip-path: ${v?.launch?.clip}; background: ${v?.launch?.bg}; opacity: ${v?.launch?.opacity}; overflow: hidden; cursor: pointer; transition: ${v?.launch?.transition}; will-change: clip-path">
 <div style="position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; color: ${v?.launch?.fg}; opacity: ${v?.launch?.contentOpacity}; transform: scale(${v?.launch?.contentScale}); transition: ${v?.launch?.contentTransition}">
 <span style="font-size: 56px; font-weight: 700; letter-spacing: -0.02em">${v?.launch?.name}</span>
 <span style="margin-top: -10px; font-size: 22px; font-weight: 400; opacity: 0.8">${v?.launch?.sub}</span>
@@ -1697,7 +1697,7 @@ class Component extends DCLogic {
     // Seulement l’image affichée, la précédente (pour le fondu) et la suivante (préchargée) : les autres ne prennent pas de mémoire.
     if (this._heroIdx !== idx) { this._heroPrev = this._heroIdx; this._heroIdx = idx; }
     const keepBg = (i) => i === idx || i === this._heroPrev || i === (idx + 1) % reprise.length;
-    const heroBgs = reprise.map((r, i) => ({ has: !!r.backdrop && keepBg(i), src: r.backdrop || "", opacity: i === idx ? "1" : "0" }));
+    const heroBgs = reprise.map((r, i) => ({ has: !!r.backdrop && keepBg(i), src: r.backdrop || "", opacity: i === idx ? "1" : "0", cur: i === idx ? "1" : "0" }));
 
     // Tuile à fond de marque uni (PS5, Switch, YouTube, Netflix, Apple TV, HBO Max, Spotify, Prime Video, Crunchyroll, Disney+ en dégradé) : le fond porte la couleur, le logo est centré.
     const dark = (on, tint, ink) => ({
