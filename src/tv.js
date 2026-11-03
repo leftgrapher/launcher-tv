@@ -161,6 +161,28 @@ export async function setHdmi(n) {
   await withTimeout(new Promise((res, rej) => T.tvwindow.setSource(src, res, rej, "MAIN")), 4000, "HDMI");
 }
 
+// Ouvre une vidéo YouTube directement dans TizenTube : TizenBrew accepte qu’une autre appli lui demande d’ouvrir
+// un de ses modules avec des paramètres (c’est ce que fait TizenTube quand on « caste » depuis un téléphone).
+// Si ça échoue, TizenTube s’ouvre simplement.
+export async function launchYoutubeVideo(videoId) {
+  if (!onTV) return false;
+  const data = JSON.stringify({ moduleName: "@foxreis/tizentube", moduleType: "npm", args: "v=" + videoId });
+  const ids = await candidates("youtube");
+  for (const id of ids) {
+    try {
+      await withTimeout(new Promise((res, rej) => {
+        const ctl = new T.ApplicationControl("http://tizen.org/appcontrol/operation/view", null, null, null, [new T.ApplicationControlData("module", [data])]);
+        T.application.launchAppControl(ctl, id, res, rej);
+      }), 6000, "vidéo YouTube");
+      note("vidéo YouTube " + videoId + " → " + id);
+      return true;
+    } catch (e) {
+      note("vidéo YouTube → " + id + " : " + ((e && ((e.name || "") + " " + (e.message || "")).trim()) || e));
+    }
+  }
+  return launchApp("youtube");
+}
+
 // Bascule la TV sur une entrée HDMI, puis ouvre l’écran TV de Samsung sur cette source (mode jeu, VRR… restent ceux de la TV).
 // Si la TV refuse, on ouvre le menu Sources de Samsung. « dejaChoisie » : la source a déjà été choisie (image en direct affichée).
 export async function showSource(n, dejaChoisie) {

@@ -4,7 +4,7 @@
 import { Component } from "preact";
 import * as MainBoard from "./boards/main.js";
 import * as HubBoard from "./boards/hub.js";
-import { onTV, launchApp, showSource, quitLauncher, HDMI, store, note } from "./tv.js";
+import { onTV, launchApp, launchYoutubeVideo, showSource, quitLauncher, HDMI, store, note } from "./tv.js";
 import { openFx, rectIn } from "./launch-fx.js";
 import * as video from "./video.js";
 
@@ -37,8 +37,10 @@ export function makeBoards(html) {
       super.componentDidMount();
       this._onVis = () => {
         if (document.hidden) {
-          // L’appli passe derrière une autre : l’aperçu en direct s’arrête (il sera relancé au retour).
+          // L’appli passe derrière une autre : l’aperçu en direct s’arrête (il sera relancé au retour),
+          // et l’appli ouverte prend sa place en tête de l’accueil (pas avant, pour que rien ne bouge pendant l’attente).
           if (this._pvFor) { this._pvFor = null; video.stopPreview(); }
+          this._flushOpen();
           return;
         }
         this._resume();
@@ -85,10 +87,12 @@ export function makeBoards(html) {
         const el = document.querySelector('[data-tile="' + f + '"]');
         if (!el) return;
         this._pvFor = f;
-        // Un peu en retrait des bords : l’image en direct est rectangulaire, la tuile a des coins arrondis.
+        // L’image en direct remplit l’intérieur du cadre de la tuile (le liseré de sélection reste autour), coins arrondis compris.
         const r = rectIn(el);
-        const k = 7 * (r.w / (el.offsetWidth || r.w));
-        video.preview(n, { x: r.x + k, y: r.y + k, w: r.w - 2 * k, h: r.h - 2 * k });
+        const k = r.w / (el.offsetWidth || r.w);
+        const rim = 2 * k;
+        const rad = (parseFloat(getComputedStyle(el).borderTopLeftRadius) || 22) * k;
+        video.preview(n, { x: r.x + rim, y: r.y + rim, w: r.w - 2 * rim, h: r.h - 2 * rim, r: Math.max(0, rad - rim) });
       } else if (!want && this._pvFor) {
         this._pvFor = null;
         video.stopPreview();
@@ -107,12 +111,39 @@ export function makeBoards(html) {
       launchApp("reglages").then((ok) => { if (!ok) super._openSys(); });
     }
 
-    // Sur la TV, l’écran de lancement de la maquette est remplacé par la tuile qui s’agrandit (launch-fx.js),
-    // et l’appli est lancée tout de suite, pendant l’animation.
+    // Sur la TV, l’écran de lancement de la maquette n’est pas affiché.
+    // Applis : lancées tout de suite ; la tuile pulse doucement jusqu’à ce que l’appli s’affiche (une animation plein écran
+    // ne servait à rien, l’appli mettant plus de temps à démarrer).
+    // Sources HDMI : la tuile grandit jusqu’au plein écran et laisse voir l’image en direct (launch-fx.js).
     _startFx(el, opts) {
       if (this._fx) this._fx.close(true);
       this._fx = null;
       try { this._fx = openFx(el, opts); } catch (e) { note("animation d’ouverture : " + e.message); }
+    }
+
+    _wait(el) {
+      this._unwait();
+      if (!el) return;
+      const holder = el.parentElement && el.parentElement.querySelector("[data-tile]") === el ? el.parentElement : el;
+      holder.classList.add("lfx-wait");
+      this._waitEl = holder;
+    }
+
+    _unwait() {
+      if (this._waitEl) this._waitEl.classList.remove("lfx-wait");
+      this._waitEl = null;
+    }
+
+    // La maquette range l’appli ouverte en tête de l’accueil 0,64 s après l’appui : sur la TV, on attend qu’elle s’affiche.
+    _deferOpen(update) {
+      clearTimeout(this._lt2);
+      this._pendingOpen = update;
+    }
+
+    _flushOpen() {
+      const f = this._pendingOpen;
+      this._pendingOpen = null;
+      if (f) this.setState((s) => (s.launch ? f(s) : {}));
     }
 
     _launch(it, el) {
@@ -120,20 +151,41 @@ export function makeBoards(html) {
       super._launch(it, el);
       if (!onTV || it.sys) return;
       const key = it.add || it.installed === false ? "store" : it.id;
-      // Source HDMI : son image en direct est demandée tout de suite (si elle était déjà en aperçu dans la tuile, elle passe
-      // directement en plein écran, sous l’écran qui grandit).
-      this._srcP = HDMI[key] ? video.full(HDMI[key]) : null;
-      this._startFx(el, { id: it.id });
-      this._goOut(() => (HDMI[key] ? this._openSource(HDMI[key]) : launchApp(key)), it.add ? "Le store Samsung" : it.name, before);
+      const store = it.installed === false || !!it.add;
+      this._deferOpen((s) => (store
+        ? { launch: Object.assign({}, s.launch, { phase: "open" }), focus: it.id }
+        : Object.assign({ launch: Object.assign({}, s.launch, { phase: "open" }), lastOpen: it.id, focus: it.id, lastFav: it.id, view: "home" }, this._opened(s, it.id))));
+      if (HDMI[key]) {
+        // Source HDMI : son image en direct est demandée tout de suite (si elle était déjà en aperçu dans la tuile,
+        // elle passe directement en plein écran, sous l’écran qui grandit).
+        this._srcP = video.full(HDMI[key]);
+        this._startFx(el, { id: it.id });
+        this._goOut(() => this._openSource(HDMI[key]), it.name, before);
+        return;
+      }
+      this._wait(el);
+      this._goOut(() => launchApp(key), it.add ? "Le store Samsung" : it.name, before);
     }
 
+    // Reco : YouTube ouvre directement la vidéo (TizenTube) ; les autres applis de streaming de la TV n’acceptent pas
+    // qu’on leur demande un titre précis, elles s’ouvrent sur leur accueil.
     _launchHero(r, el) {
       const before = this._memo();
       super._launchHero(r, el);
       if (!onTV) return;
-      this._srcP = HDMI[r.app] ? video.full(HDMI[r.app]) : null;
-      this._startFx(el, { id: r.app, image: r.backdrop || null });
-      this._goOut(() => (HDMI[r.app] ? this._openSource(HDMI[r.app]) : launchApp(r.app)), r.name, before);
+      this._deferOpen((s) => Object.assign({
+        launch: Object.assign({}, s.launch, { phase: "open", card: s.launch && s.launch.card != null ? "0" : null }),
+        lastOpen: r.app, focus: r.app, lastFav: r.app
+      }, this._opened(s, r.app)));
+      if (HDMI[r.app]) {
+        this._srcP = video.full(HDMI[r.app]);
+        this._startFx(el, { id: r.app, image: r.backdrop || null });
+        this._goOut(() => this._openSource(HDMI[r.app]), r.name, before);
+        return;
+      }
+      this._wait(el);
+      if (!el) toast("Ouverture dans " + (r.name || "l’appli") + "…");
+      this._goOut(() => (r.app === "youtube" && r.video ? launchYoutubeVideo(r.video) : launchApp(r.app)), r.name, before);
     }
 
     // Source HDMI : son image en direct passe sous l’écran qui grandit, qui s’efface ensuite pour la laisser voir ;
@@ -170,7 +222,7 @@ export function makeBoards(html) {
     _canQuit() {
       const s = this.state || {};
       const N = this._nav || {};
-      return N.view === "home" && s.focus !== "hub" && !s.launch && !s.sys && !s.edit && !this._fx;
+      return N.view === "home" && s.focus !== "hub" && !s.launch && !s.sys && !s.edit && !this._fx && !this._waitEl;
     }
 
     // Retour pendant l’ouverture (l’appli tarde à s’afficher) : on revient à l’accueil.
@@ -208,6 +260,8 @@ export function makeBoards(html) {
       const s = this.state || {};
       clearTimeout(this._safeT);
       if (this._fx) { this._fx.close(); this._fx = null; }
+      this._unwait();
+      this._pendingOpen = null;
       if (onTV) video.releaseLive();
       this._armIdle();
       if (!s.launch) { this._tvVideo(); return; }
@@ -259,12 +313,14 @@ export function makeBoards(html) {
         : id === "smartthings" ? () => launchApp("smartthings")
         : null;
       if (!go) return;
-      // Même ouverture que sur l’accueil : le bouton grandit jusqu’au plein écran.
-      const btn = el || document.querySelector('[data-hub-btn="' + id + '"]');
       if (this._fx) this._fx.close(true);
       this._fx = null;
       document.documentElement.classList.add("lfx-hub");
-      try { this._fx = openFx(btn, { id: id, splash: id === "switch" ? "#2A0B0C" : "#0B0C10" }); } catch (e) { note("animation d’ouverture : " + e.message); }
+      // Source HDMI : comme sur l’accueil, le bouton grandit jusqu’au plein écran et laisse voir l’image en direct.
+      if (n) {
+        const btn = el || document.querySelector('[data-hub-btn="' + id + '"]');
+        try { this._fx = openFx(btn, { id: id, splash: id === "switch" ? "#2A0B0C" : "#0B0C10" }); } catch (e) { note("animation d’ouverture : " + e.message); }
+      }
       clearTimeout(this._tvT);
       this._tvT = setTimeout(() => go().then((ok) => {
         if (ok) return;

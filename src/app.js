@@ -75,6 +75,14 @@ html.v-full .board{visibility:hidden}
 html.v-return .board{animation:vReturn 320ms ease both}
 @keyframes vReturn{from{opacity:0}to{opacity:1}}
 html.v-quit #launcher{opacity:0;transition:opacity 240ms ease}
+html.v-hole,html.v-hole body{background:transparent!important}
+html.v-hole [data-launcher]{-webkit-mask-image:linear-gradient(#000,#000),var(--hole-img);-webkit-mask-size:100% 100%,var(--hole-w) var(--hole-h);
+  -webkit-mask-position:0 0,var(--hole-x) var(--hole-y);-webkit-mask-repeat:no-repeat;-webkit-mask-composite:xor;mask-composite:exclude}
+html.v-hole [data-tile] *{animation:none!important}
+.lfx-wait>span:first-child{animation:lfxPulse 1.1s ease-in-out infinite!important}
+.lfx-wait[data-card]{animation:lfxPulse2 1.1s ease-in-out infinite!important}
+@keyframes lfxPulse{0%,100%{opacity:1}50%{opacity:.3}}
+@keyframes lfxPulse2{0%,100%{opacity:1}50%{opacity:.6}}
 `;
 
 function injectCss() {

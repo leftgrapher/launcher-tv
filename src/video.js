@@ -264,8 +264,24 @@ function signal(ms) {
 
 const err = (e) => ((e && ((e.name || "") + " " + (e.message || "")).trim()) || String(e));
 
-// Aperçu en direct dans une tuile (rect en coordonnées 1920×1080). Résout true si l’image est affichée.
-export async function preview(n, rect) {
+// Fenêtre découpée dans l’interface (coins arrondis compris) à l’endroit de la tuile : l’image en direct, placée
+// sous l’interface, n’est visible que là, exactement dans le cadre de la tuile.
+function setHole(h) {
+  if (!html) return;
+  if (!h) { cls("v-hole", false); return; }
+  const svg = "<svg xmlns='http://www.w3.org/2000/svg' width='" + h.w + "' height='" + h.h + "'><rect width='" + h.w + "' height='" + h.h + "' rx='" + h.r + "' ry='" + h.r + "' fill='black'/></svg>";
+  const st = html.style;
+  st.setProperty("--hole-img", "url(\"data:image/svg+xml;utf8," + encodeURIComponent(svg) + "\")");
+  st.setProperty("--hole-x", h.x + "px");
+  st.setProperty("--hole-y", h.y + "px");
+  st.setProperty("--hole-w", h.w + "px");
+  st.setProperty("--hole-h", h.h + "px");
+  cls("v-hole", true);
+}
+
+// Aperçu en direct dans une tuile. hole : intérieur du cadre de la tuile en coordonnées 1920×1080, avec son arrondi
+// { x, y, w, h, r }. L’image (16:9) le couvre entièrement, centrée, sans être déformée. Résout true si elle est affichée.
+export async function preview(n, hole) {
   if (!onTV || !hasTvWindow()) return false;
   const g = ++live.gen;
   live.mode = "preview";
@@ -281,13 +297,15 @@ export async function preview(n, rect) {
       return false;
     }
     if (g !== live.gen) return false;
-    await tvShow(rect, "FRONT");
+    const w = Math.max(hole.w, (hole.h * 16) / 9) + 2, h = (w * 9) / 16;
+    await tvShow({ x: hole.x + hole.w / 2 - w / 2, y: hole.y + hole.h / 2 - h / 2, w, h }, "BEHIND");
     if (g !== live.gen) { tvHide(); return false; }
+    setHole({ x: Math.round(hole.x), y: Math.round(hole.y), w: Math.round(hole.w), h: Math.round(hole.h), r: Math.round(hole.r) });
     note("aperçu en direct HDMI " + n);
     return true;
   } catch (e) {
     note("aperçu HDMI " + n + " : " + err(e));
-    if (g === live.gen) { live.mode = null; resumeBg(); }
+    if (g === live.gen) { live.mode = null; setHole(null); resumeBg(); }
     return false;
   }
 }
@@ -296,6 +314,7 @@ export function stopPreview() {
   if (live.mode !== "preview") return;
   live.gen++;
   live.mode = null;
+  setHole(null);
   tvHide();
   resumeBg();
 }
@@ -319,6 +338,7 @@ export async function full(n) {
     }
     if (g !== live.gen) return 1;
     await tvShow({ x: 0, y: 0, w: 1920, h: 1080 }, "BEHIND");
+    setHole(null);
     return g === live.gen ? 2 : 1;
   } catch (e) {
     note("image en direct HDMI " + n + " : " + err(e));
@@ -331,6 +351,7 @@ export function releaseLive() {
   if (!live.mode && !html.classList.contains("v-full")) { if (liveOn) resumeBg(); return; }
   live.gen++;
   live.mode = null;
+  setHole(null);
   if (hasTvWindow()) tvHide();
   if (html.classList.contains("v-full")) {
     cls("v-full", false);

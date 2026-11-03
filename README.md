@@ -85,10 +85,11 @@ Sans clé TMDB, l’accueil garde ses exemples. Attention : `recos.json` est en 
 
 | Élément | Sur la TV |
 |---|---|
-| Tuiles d’applis | Ouvrent la vraie appli (identifiants connus, sinon recherche par nom parmi les applis installées), lancée dès l’appui pendant que la tuile grandit jusqu’au plein écran et prend l’allure de l’écran de démarrage de l’appli. Si elle n’est pas trouvée : message, et retour à l’accueil. |
+| Tuiles d’applis | Ouvrent la vraie appli (identifiants connus, sinon recherche par nom parmi les applis installées), lancée dès l’appui ; la tuile pulse jusqu’à ce que l’appli s’affiche. Si elle n’est pas trouvée : message, et retour à l’accueil. |
+| Recos | Une vidéo YouTube s’ouvre directement dans TizenTube. Les autres (Netflix, Disney+, HBO Max, Apple TV…) ouvrent l’appli sur son accueil : sur les TV récentes, elles ignorent les demandes d’ouvrir un titre précis. |
 | YouTube | Ouvre TizenBrew (régler TizenBrew pour lancer TizenTube automatiquement). « YouTube, appli officielle » ouvre l’appli Samsung. |
 | PS5, Switch, Mac, PC | Basculent sur HDMI 1, 2, 3, 4 : l’image en direct apparaît sous la tuile qui grandit, puis l’écran TV de Samsung prend le relais. Si la TV refuse, le menu Sources s’ouvre. |
-| Aperçu d’une source | Tuile PS5 ou Switch sélectionnée quelques secondes : son image en direct s’affiche dans la tuile (la TV bascule sur cette entrée, son compris). Les applis, elles, ne peuvent pas être montrées en direct (Tizen ne donne pas l’image d’une autre appli). |
+| Aperçu d’une source | Tuile PS5 ou Switch du dock sélectionnée quelques secondes : son image en direct remplit la tuile, dans son cadre (la TV bascule sur cette entrée, son compris). Pas d’aperçu pour les applis (Tizen ne donne pas l’image d’une autre appli). |
 | Fonds des recos | En vraie 4K quand TMDB a l’image en 3840 px : un clip vidéo d’une image, préparé en ligne avec les recos (`tools/bg4k.mjs`), joué sous l’interface par le lecteur de la TV (`src/video.js`). Ailleurs, l’image 1920×1080. |
 | Ajouter une appli | Ouvre le store Samsung. |
 | Réglages | Ouvrent le vrai panneau de réglages Samsung, par-dessus le launcher. |

@@ -405,7 +405,7 @@ ${(c?.hasImg) ? html`
 <div role="group" aria-label="Applications" style="position: absolute; inset: 0; pointer-events: none">
 ${(v?.tiles || []).map((item, $index) => html`
 <div style="position: absolute; left: 0; top: 0; z-index: ${item?.z}; transform: translate3d(${item?.x}, ${item?.y}, 0); transition: ${item?.posTransition}; --lag: ${item?.rowLag}; animation: ${item?.rowAnim}; will-change: transform; pointer-events: none">
-<span aria-hidden="true" style="position: absolute; left: 0; top: 0; width: ${item?.w}; height: 161px; border-radius: 22px; box-shadow: ${item?.glow}; opacity: ${item?.glowOn}; transform: scale(${item?.glowScale}); transition: ${item?.glowTransition}; will-change: opacity, transform; pointer-events: none"></span>
+<span aria-hidden="true" style="position: absolute; left: 0; top: 0; width: ${item?.w}; height: 161px; border-radius: 22px; box-shadow: ${item?.glow}; opacity: ${item?.glowOn}; transform: ${item?.transform}; scale: ${item?.lift}; animation: ${item?.bounce}; transition: ${item?.glowTransition}; will-change: opacity, transform; pointer-events: none"></span>
 <button type="button" data-tile="${item?.id}" aria-label="${item?.label}" onClick="${item?.open}" onFocus="${item?.pick}" onMouseEnter="${item?.pick}" onMouseMove="${item?.move}" onMouseLeave="${item?.leave}" onMouseDown="${item?.down}" onMouseUp="${item?.up}" style="position: relative; width: ${item?.w}; height: 161px; overflow: hidden; border-radius: 22px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; background: ${item?.bg}; background-origin: border-box; background-repeat: no-repeat; color: ${item?.fg}; border: 1px solid ${item?.border}; transform: ${item?.transform}; box-shadow: ${item?.shadow}; opacity: ${item?.opacity}; transition: ${item?.tileTransition}; animation: ${item?.bounce}; scale: ${item?.lift}; will-change: transform; pointer-events: auto">
 <span aria-hidden="true" style="position: absolute; inset: 0; pointer-events: none; opacity: ${item?.sheen}; background: ${item?.sheenBg}; transition: opacity 240ms ease"></span>
 ${(item?.isPs5) ? html`
@@ -1735,13 +1735,14 @@ class Component extends DCLogic {
       prime: "ocean", disney: "glacier", crunchyroll: "crepuscule", spotify: "foret", switch: "braise",
       paramount: "glacier", canal: "crepuscule", youtubeapp: "foret"
     };
-    // Aperçu dans la tuile : l’image d’une reco de cette appli quand les vraies recos sont là (sinon rien) ;
-    // dans la maquette, un paysage d’attente.
+    // Aperçu dans la tuile d’une source (PS5, Switch…) : sur la TV, son image en direct par-dessus ;
+    // en dessous, l’image d’une reco de cette source, ou un paysage d’attente dans la maquette.
     const recosReelles = Array.isArray(this.props.recos) && this.props.recos.length > 0;
     const peekFields = (it, inDock) => {
       const rec = recosReelles ? toutesLesRecos.find((r) => r.app === it.id && (r.thumb || r.backdrop)) : null;
       const sc = it.installed === false ? null : peekScenes[it.id];
-      const has = recosReelles ? !!rec : !!sc;
+      // Aperçu seulement pour les sources (PS5, Switch…) : sur la TV, leur image en direct ; ici, un paysage d’attente.
+      const has = !!it.source && !!(rec || sc);
       const on = has && inDock && view === "home" && peekId === it.id;
       const pk = scenes[sc || "crepuscule"];
       return {
@@ -1910,7 +1911,8 @@ class Component extends DCLogic {
       t.glow = splitSh(onSh).filter((x) => !/^inset/.test(x)).join(", ") || "none";
       t.glowOn = on ? "1" : "0";
       t.glowScale = on ? (pressed ? "1.02" : (motion ? "1.08" : "1.04")) : "1";
-      t.glowTransition = motion ? "opacity 300ms ease, transform 380ms " + spring : "opacity 160ms ease";
+      // Le halo suit exactement la tuile (même transformation, même rebond) : il ne prend plus d’avance ni de retard sur elle.
+      t.glowTransition = motion ? "opacity 300ms ease, transform 380ms " + spring + ", scale 320ms cubic-bezier(0.34, 1.5, 0.5, 1)" : "opacity 160ms ease";
       if (on) t.shadow = splitSh(t.shadow).filter((x) => /^inset/.test(x)).join(", ") || "none";
       t.badgeBg = on ? "rgba(11, 12, 15, 0.08)" : "rgba(11, 12, 15, 0.06)";
       t.badgeFg = "#3C3E47";
