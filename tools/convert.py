@@ -115,12 +115,12 @@ def shrink(path, width=640):
     try:
         from PIL import Image
     except ImportError:
-        return
+        return False
     if not re.search(r'\.(png|webp|jpe?g)$', path, re.I):
-        return
+        return False
     im = Image.open(path)
     if im.width <= width:
-        return
+        return False
     h = round(im.height * width / im.width)
     im = im.convert('RGBA') if im.mode in ('P', 'LA') else im
     out = im.resize((width, h), Image.LANCZOS)
@@ -130,6 +130,7 @@ def shrink(path, width=640):
         out.save(path, 'PNG', optimize=True)
     else:
         out.convert('RGB').save(path, 'JPEG', quality=90)
+    return True
 
 
 def main():
@@ -167,8 +168,16 @@ def main():
         dest = 'private' if i in PRIVATE else 'public'
         target = os.path.join(OUT, dest, 'assets', bm[i])
         shutil.copy(os.path.join(BLOBS, bm[i]), target)
-        if dest == 'public':
-            shrink(target)
+        if dest == 'public' and shrink(target):
+            # Nouveau nom : l’appli TV garde sa copie d’origine sous l’ancien nom, celle-ci viendra du serveur.
+            base, ext = os.path.splitext(bm[i])
+            renamed = base + '-640' + ext
+            os.replace(target, os.path.join(OUT, dest, 'assets', renamed))
+            for gen in ('main.js', 'hub.js', 'boards.css'):
+                gp = os.path.join(OUT, 'src', 'boards', gen)
+                g = open(gp, encoding='utf-8').read()
+                if bm[i] in g:
+                    open(gp, 'w', encoding='utf-8').write(g.replace(bm[i], renamed))
     print('planches converties ; %d fichiers d’images/polices copiés (%d privés)' % (len(used), len(used & PRIVATE)))
 
 

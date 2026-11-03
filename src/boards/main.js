@@ -458,13 +458,13 @@ ${(item?.isArt) ? html`
 ${(item?.art_youtube) ? html`
 <span aria-hidden="true" class="logo-slot" style="position: relative; display: flex; flex-direction: column; width: 150px; color: ${item?.fg}; opacity: ${item?.artOpacity}; transform: ${item?.layer}; transition: ${item?.layerTransition}">
 <span class="logo-ph" style="display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 10px 0; border-radius: 10px; border: 1.5px dashed ${item?.slotBorder}"><svg class="ph-icon" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect><circle cx="9" cy="9" r="2"></circle><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path></svg><span style="font-size: 18px; font-weight: 700; letter-spacing: -0.01em">${item?.name}</span></span>
-<img src="${A("5d6ec99beb042687169d4f17c98a9fae.webp")}" alt="adobe-illustrator-2024-2026-10-28-21-16-" width="3849" height="860" style="max-width: 100%; height: auto; display: block; object-fit: cover; width: 3849px; aspect-ratio: 3849 / 860" />
+<img src="${A("5d6ec99beb042687169d4f17c98a9fae-640.webp")}" alt="adobe-illustrator-2024-2026-10-28-21-16-" width="3849" height="860" style="max-width: 100%; height: auto; display: block; object-fit: cover; width: 3849px; aspect-ratio: 3849 / 860" />
 </span>
 ` : null}
 ${(item?.art_appletv) ? html`
 <span aria-hidden="true" class="logo-slot" style="position: relative; display: flex; flex-direction: column; width: 112px; color: ${item?.fg}; opacity: ${item?.artOpacity}; transform: ${item?.layer}; transition: ${item?.layerTransition}">
 <span class="logo-ph" style="display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 10px 0; border-radius: 10px; border: 1.5px dashed ${item?.slotBorder}"><svg class="ph-icon" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect><circle cx="9" cy="9" r="2"></circle><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path></svg><span style="font-size: 18px; font-weight: 700; letter-spacing: -0.01em">${item?.name}</span></span>
-<img src="${A("ce658ecf4d7ab6243b2720cf7ac97a9b.png")}" alt="apple-tv-logo" width="1080" height="1080" style="max-width: 100%; height: auto; display: block; object-fit: cover; width: 1080px; aspect-ratio: 1080 / 1080" />
+<img src="${A("ce658ecf4d7ab6243b2720cf7ac97a9b-640.png")}" alt="apple-tv-logo" width="1080" height="1080" style="max-width: 100%; height: auto; display: block; object-fit: cover; width: 1080px; aspect-ratio: 1080 / 1080" />
 </span>
 ` : null}
 ${(item?.art_netflix) ? html`
@@ -485,7 +485,7 @@ ${(item?.art_hbo) ? html`
 </span>
 ` : null}
 ${(item?.art_freetv) ? html`
-<span aria-hidden="true" class="tile-art" style="position: absolute; inset: 0; pointer-events: none; opacity: ${item?.artOpacity}; transform: ${item?.layer} scale(1.07); transition: ${item?.layerTransition}; --art-bg: ${item?.artBg}; --art-x: ${item?.artX}; --art-y: ${item?.artY}; --art-w: ${item?.artW}; --art-h: ${item?.artH}; --art-clip: ${item?.artClip}"><img src="${A("9dddd8f5120cceb2d4cb72ac2d402dda.png")}" alt="image" width="1920" height="1280" style="max-width: 100%; height: auto; display: block; object-fit: cover; width: 1920px; aspect-ratio: 1920 / 1280" /></span>
+<span aria-hidden="true" class="tile-art" style="position: absolute; inset: 0; pointer-events: none; opacity: ${item?.artOpacity}; transform: ${item?.layer} scale(1.07); transition: ${item?.layerTransition}; --art-bg: ${item?.artBg}; --art-x: ${item?.artX}; --art-y: ${item?.artY}; --art-w: ${item?.artW}; --art-h: ${item?.artH}; --art-clip: ${item?.artClip}"><img src="${A("9dddd8f5120cceb2d4cb72ac2d402dda-640.png")}" alt="image" width="1920" height="1280" style="max-width: 100%; height: auto; display: block; object-fit: cover; width: 1920px; aspect-ratio: 1920 / 1280" /></span>
 ` : null}
 ${(item?.art_prime) ? html`
 <span aria-hidden="true" class="logo-slot" style="position: relative; display: flex; flex-direction: column; width: 76px; color: #ffffff; opacity: ${item?.artOpacity}; transform: ${item?.layer}; transition: ${item?.layerTransition}">
@@ -564,7 +564,7 @@ ${(item?.art_spotify) ? html`
 ${(item?.art_paramount) ? html`
 <span aria-hidden="true" class="logo-slot mono" style="position: relative; display: flex; flex-direction: column; width: 112px; color: ${item?.fg}; opacity: ${item?.artOpacity}; transform: ${item?.layer}; transition: ${item?.layerTransition}">
 <span class="logo-ph" style="display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 10px 0; border-radius: 10px; border: 1.5px dashed ${item?.slotBorder}"><svg class="ph-icon" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect><circle cx="9" cy="9" r="2"></circle><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path></svg><span style="font-size: 18px; font-weight: 700; letter-spacing: -0.01em">${item?.name}</span></span>
-<img src="${A("5df2dfa0298d1a7396e631e9de889735.webp")}" alt="adobe-illustrator-2024-2026-10-29-00-54-" width="4167" height="2593" style="max-width: 100%; height: auto; display: block; object-fit: cover; width: 4167px; aspect-ratio: 4167 / 2593" />
+<img src="${A("5df2dfa0298d1a7396e631e9de889735-640.webp")}" alt="adobe-illustrator-2024-2026-10-29-00-54-" width="4167" height="2593" style="max-width: 100%; height: auto; display: block; object-fit: cover; width: 4167px; aspect-ratio: 4167 / 2593" />
 </span>
 ` : null}
 ${(item?.art_canal) ? html`
@@ -581,13 +581,13 @@ ${(item?.art_canal) ? html`
 ${(item?.art_hue) ? html`
 <span aria-hidden="true" class="logo-slot" style="position: relative; display: flex; flex-direction: column; width: 124px; color: ${item?.fg}; opacity: ${item?.artOpacity}; transform: ${item?.layer}; transition: ${item?.layerTransition}">
 <span class="logo-ph" style="display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 10px 0; border-radius: 10px; border: 1.5px dashed ${item?.slotBorder}"><svg class="ph-icon" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect><circle cx="9" cy="9" r="2"></circle><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path></svg><span style="font-size: 18px; font-weight: 700; letter-spacing: -0.01em">${item?.name}</span></span>
-<img src="${A("3703ccfdce74ce302f7d2a462a814016.webp")}" alt="Hue" width="2560" height="1003" style="display: block; object-fit: cover; aspect-ratio: 2560 / 1003" />
+<img src="${A("3703ccfdce74ce302f7d2a462a814016-640.webp")}" alt="Hue" width="2560" height="1003" style="display: block; object-fit: cover; aspect-ratio: 2560 / 1003" />
 </span>
 ` : null}
 ${(item?.art_smartthings) ? html`
 <span aria-hidden="true" class="logo-slot" style="position: relative; display: flex; flex-direction: column; width: 80px; color: ${item?.fg}; opacity: ${item?.artOpacity}; transform: ${item?.layer}; transition: ${item?.layerTransition}">
 <span class="logo-ph" style="display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 10px 0; border-radius: 10px; border: 1.5px dashed ${item?.slotBorder}"><svg class="ph-icon" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect><circle cx="9" cy="9" r="2"></circle><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path></svg><span style="font-size: 18px; font-weight: 700; letter-spacing: -0.01em">${item?.name}</span></span>
-<img src="${A("20e767f6e87ffe0fb4581fffa1e23a1a.png")}" alt="SmartThings" width="800" height="769" style="display: block" />
+<img src="${A("20e767f6e87ffe0fb4581fffa1e23a1a-640.png")}" alt="SmartThings" width="800" height="769" style="display: block" />
 </span>
 ` : null}
 ${(item?.art_reglages) ? html`
