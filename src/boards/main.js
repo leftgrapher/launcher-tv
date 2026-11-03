@@ -682,6 +682,21 @@ ${(v?.editBar?.on) ? html`
 </div>
 
 <div style="position: absolute; top: 60px; right: 56px; height: 56px; display: flex; align-items: center; gap: 24px">
+<span role="img" aria-label="${v?.meteo?.aria}" style="display: flex; align-items: center; gap: 10px; font-size: 30px; font-weight: 500; letter-spacing: -0.01em; font-variant-numeric: tabular-nums; text-shadow: 0 2px 16px rgba(0, 0, 0, 0.35); opacity: ${v?.meteo?.opacity}; transition: opacity 400ms ease">
+<span aria-hidden="true" style="display: flex; color: #F5F5F7">
+${(v?.meteo?.soleil) ? html`<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2"></path><path d="M12 20v2"></path><path d="m4.93 4.93 1.41 1.41"></path><path d="m17.66 17.66 1.41 1.41"></path><path d="M2 12h2"></path><path d="M20 12h2"></path><path d="m6.34 17.66-1.41 1.41"></path><path d="m19.07 4.93-1.41 1.41"></path></svg>` : null}
+${(v?.meteo?.lune) ? html`<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path></svg>` : null}
+${(v?.meteo?.eclaircie) ? html`<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v2"></path><path d="m4.93 4.93 1.41 1.41"></path><path d="M20 12h2"></path><path d="m19.07 4.93-1.41 1.41"></path><path d="M15.947 12.65a4 4 0 0 0-5.925-4.128"></path><path d="M13 22H7a5 5 0 1 1 4.9-6H13a3 3 0 0 1 0 6Z"></path></svg>` : null}
+${(v?.meteo?.eclaircieNuit) ? html`<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M13 16a3 3 0 1 1 0 6H7a5 5 0 1 1 4.9-6Z"></path><path d="M10.1 9A6 6 0 0 1 16 4a4 4 0 0 0 6 6 6 6 0 0 1-3 5.197"></path></svg>` : null}
+${(v?.meteo?.nuage) ? html`<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"></path></svg>` : null}
+${(v?.meteo?.brouillard) ? html`<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"></path><path d="M16 17H7"></path><path d="M17 21H9"></path></svg>` : null}
+${(v?.meteo?.bruine) ? html`<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"></path><path d="M8 19v1"></path><path d="M8 14v1"></path><path d="M16 19v1"></path><path d="M16 14v1"></path><path d="M12 21v1"></path><path d="M12 16v1"></path></svg>` : null}
+${(v?.meteo?.pluie) ? html`<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"></path><path d="M16 14v6"></path><path d="M8 14v6"></path><path d="M12 16v6"></path></svg>` : null}
+${(v?.meteo?.neige) ? html`<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"></path><path d="M8 15h.01"></path><path d="M8 19h.01"></path><path d="M12 17h.01"></path><path d="M12 21h.01"></path><path d="M16 15h.01"></path><path d="M16 19h.01"></path></svg>` : null}
+${(v?.meteo?.orage) ? html`<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 16.326A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 .5 8.973"></path><path d="m13 12-3 5h4l-3 5"></path></svg>` : null}
+</span>
+<span aria-hidden="true">${v?.meteo?.temp}</span>
+</span>
 <span style="font-size: 30px; font-weight: 500; letter-spacing: -0.01em; font-variant-numeric: tabular-nums; text-shadow: 0 2px 16px rgba(0, 0, 0, 0.35); opacity: ${v?.topClockOpacity}; transition: opacity 400ms ease">${v?.heure}</span>
 <button type="button" class="lg" aria-label="Ouvrir le hub" onClick="${v?.hub?.go}" onMouseEnter="${v?.hub?.enter}" onFocus="${v?.hub?.enter}" onMouseMove="${v?.hub?.move}" onMouseLeave="${v?.hub?.leave}" onMouseDown="${v?.hub?.down}" onMouseUp="${v?.hub?.up}" style="position: relative; overflow: hidden; width: 56px; height: 56px; border-radius: 28px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; color: ${v?.hub?.fg}; text-decoration: none; background: ${v?.hub?.bg}; border: 1px solid ${v?.hub?.border}; box-shadow: ${v?.hub?.shadow}; transform: ${v?.hub?.transform}; transition: ${v?.hub?.transition}; animation: ${v?.hub?.bounce}; backdrop-filter: blur(14px) saturate(185%) brightness(1.06); -webkit-backdrop-filter: blur(14px) saturate(185%) brightness(1.06); --lg-fx: ${v?.hub?.fx}; will-change: transform">
 <span aria-hidden="true" style="position: absolute; inset: 0; pointer-events: none; opacity: ${v?.hub?.sheen}; background: ${v?.hub?.sheenBg}; transition: opacity 240ms ease"></span>
@@ -1985,6 +2000,27 @@ class Component extends DCLogic {
 
     const now = new Date();
     const heure = now.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+    // Météo à Paris, à côté de l’heure : sur la TV, Open-Meteo (props.meteo, rafraîchie toutes les 15 min ; null tant
+    // qu’elle n’est pas arrivée) ; dans la maquette, une valeur d’exemple.
+    const mt = this.props.meteo === undefined ? { temp: 13, code: 2, isDay: true } : this.props.meteo;
+    const ciel = (c, jour) => c <= 1 ? (jour ? "soleil" : "lune")
+      : c === 2 ? (jour ? "eclaircie" : "eclaircieNuit")
+      : c === 3 ? "nuage"
+      : c === 45 || c === 48 ? "brouillard"
+      : c >= 51 && c <= 57 ? "bruine"
+      : (c >= 61 && c <= 67) || (c >= 80 && c <= 82) ? "pluie"
+      : (c >= 71 && c <= 77) || c === 85 || c === 86 ? "neige"
+      : c >= 95 ? "orage" : "nuage";
+    const cielTexte = { soleil: "Ensoleillé", lune: "Ciel dégagé", eclaircie: "Éclaircies", eclaircieNuit: "Éclaircies", nuage: "Couvert", brouillard: "Brouillard", bruine: "Bruine", pluie: "Pluie", neige: "Neige", orage: "Orage" };
+    const mk = mt ? ciel(mt.code, mt.isDay !== false) : "nuage";
+    // Vrai signe moins (−2°), plus lisible que le tiret.
+    const degres = mt ? String(Math.round(mt.temp)).replace("-", "−") + "°" : "";
+    const meteo = {
+      temp: degres,
+      aria: mt ? "Paris : " + Math.round(mt.temp) + " degrés, " + cielTexte[mk] : "",
+      opacity: mt && !isVeille ? "1" : "0"
+    };
+    Object.keys(cielTexte).forEach((k) => { meteo[k] = k === mk; });
     const fontClass = this.props.policeHeure === "SF Pro Compressed" ? "" : "arizona";
     if (this._fontClass !== fontClass) {
       this._fontClass = fontClass;
@@ -2007,8 +2043,8 @@ class Component extends DCLogic {
       fontClass: fontClass,
       k: String(st.clockK || 1.14),
       date: now.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" }),
-      // Maquette : météo fixe ; sur la TV, elle viendra d’un service météo (Open-Meteo, gratuit).
-      meteo: "13° Éclaircies",
+      // Même météo que celle affichée à côté de l’heure.
+      meteo: mt ? degres + " " + cielTexte[mk] : "",
       unlock: () => this._wakeUp(),
       drift: isVeille && motion ? "veilleDerive 90s ease-in-out infinite" : "none"
     };
@@ -2058,6 +2094,7 @@ class Component extends DCLogic {
       heroAnim: motion ? "heroIn" + (idx % 2 ? "2" : "") + " 600ms cubic-bezier(0.2, 0.8, 0.2, 1) both" : "none",
       hero: hero,
       heroBgs: heroBgs,
+      meteo: meteo,
       photoScrim: cur.backdrop ? "1" : "0",
       isApps: isApps,
       isHero: isHero,

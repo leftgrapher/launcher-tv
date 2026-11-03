@@ -98,6 +98,7 @@ Sans clé TMDB, l’accueil garde ses exemples. Attention : `recos.json` est en 
 | Retour dans le launcher | L’accueil réapparaît en fondu. |
 | Ordre des applis (mode modifier) | Gardé d’un allumage à l’autre. |
 | Écran de veille | Désactivé sur la TV (il reste dans la maquette). |
+| Météo | Paris, à côté de l’heure : Open-Meteo (gratuit, sans clé), lu par la TV toutes les 15 min. Crédit dans le panneau Info. |
 | Hub | Préparé au démarrage : l’ouvrir ou le fermer le fait seulement glisser. |
 
 Encore simulé (prévu plus tard) : Hue Sync et l’éclairage, Wi-Fi et Bluetooth, modes vidéo/jeu, « Tout éteindre », recos de jeux, météo, ouverture directe d’une série dans son appli.
@@ -113,6 +114,7 @@ Touche **Info** de la télécommande (ou « i » au clavier) : affiche le journa
 - `src/tv.js` : identifiants des applis Samsung et appels Tizen.
 - `src/launch-fx.js` : animation d’ouverture sur la TV (la tuile qui grandit jusqu’au plein écran).
 - `src/video.js` : plan vidéo de la TV (fonds 4K, image en direct des entrées HDMI).
+- `src/meteo.js` : météo de Paris (Open-Meteo).
 - `src/sounds.js` : sons de l’interface préparés d’avance (rejoués sans les recalculer à chaque appui).
 - `src/app.js` : assemblage, mise à l’échelle 1920×1080, messages, journal.
 - `tv/` : coquille de l’appli TV (`config.xml`, page de démarrage et de mise à jour, icône).

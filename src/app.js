@@ -9,6 +9,7 @@ import { makeBoards } from "./tv-boards.js";
 import { onTV, log, note, diagnostics } from "./tv.js";
 import { cachedRecos, fetchRecos, heroItems } from "./recos.js";
 import { videoState } from "./video.js";
+import { cachedMeteo, fetchMeteo } from "./meteo.js";
 
 const html = htm.bind(h);
 const { Main, Hub, mainDefaults, hubDefaults } = makeBoards(html);
@@ -138,7 +139,7 @@ class App extends Component {
   constructor() {
     super();
     const cached = cachedRecos();
-    this.state = { hub: null, hubKey: 0, toast: null, log: false, recosData: cached, recos: cached ? heroItems(cached, DATA_BASE) : null };
+    this.state = { hub: null, hubKey: 0, toast: null, log: false, recosData: cached, recos: cached ? heroItems(cached, DATA_BASE) : null, meteo: cachedMeteo() };
   }
 
   // Recos : au démarrage, au retour dans le launcher et toutes les 30 minutes (elles changent toutes les 6 h en ligne).
@@ -183,12 +184,22 @@ class App extends Component {
     window.addEventListener("keydown", this._onKey);
     this.refreshRecos();
     this._recosT = setInterval(() => this.refreshRecos(), 30 * 60 * 1000);
+    // Météo : au démarrage, toutes les 15 minutes et au retour dans le launcher.
+    this.refreshMeteo();
+    this._meteoT = setInterval(() => this.refreshMeteo(), 15 * 60 * 1000);
+    document.addEventListener("visibilitychange", () => {
+      if (!document.hidden && (!this.state.meteo || Date.now() - this.state.meteo.at > 10 * 60 * 1000)) this.refreshMeteo();
+    });
     if (onTV) setTimeout(() => this.setState({ hubReady: true }), 1500);
     document.addEventListener("visibilitychange", () => { if (!document.hidden) this.refreshRecos(); });
   }
 
   // Sur la TV, le hub est préparé une fois pour toutes au démarrage (caché) : l’ouvrir ou le fermer ne fait plus que
   // le faire glisser et apparaître, ce que la TV calcule à part, sans reconstruire tous ses boutons à chaque fois.
+  refreshMeteo() {
+    fetchMeteo().then((m) => this.setState({ meteo: m }), (e) => note("météo : " + e.message));
+  }
+
   openHub() {
     clearTimeout(this._hubT);
     window.__dcRemote = "hub";
@@ -220,7 +231,8 @@ class App extends Component {
       log.length ? log.slice(-14).join("\n") : "Rien pour l’instant.",
       "",
       "Recos : " + (s.recosData ? s.recosData.items.length + " titres, mises à jour le " + new Date(s.recosData.generatedAt).toLocaleString("fr-FR") : "exemples (pas encore de recos en ligne)"),
-      (s.recosData && s.recosData.credits) || "Données et images : TMDB (ce produit utilise l’API TMDB mais n’est ni approuvé ni certifié par TMDB). Disponibilités : JustWatch."
+      (s.recosData && s.recosData.credits) || "Données et images : TMDB (ce produit utilise l’API TMDB mais n’est ni approuvé ni certifié par TMDB). Disponibilités : JustWatch.",
+      "Météo : Weather data by Open-Meteo.com (CC BY 4.0)" + (s.meteo ? " · " + Math.round(s.meteo.temp) + "°, code " + s.meteo.code + ", relevée à " + new Date(s.meteo.at).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }) : "")
     ];
     if (d.names && d.names.length) lines.splice(4, 0, "Applis : " + d.names.slice(0, 18).join(" · "));
     return lines.join("\n");
@@ -235,7 +247,7 @@ class App extends Component {
 
   render(_, s) {
     return html`
-      <div class="board board-main"><${Main} ...${mainProps} recos=${s.recos} /></div>
+      <div class="board board-main"><${Main} ...${mainProps} recos=${s.recos} meteo=${s.meteo} /></div>
       ${onTV
         ? (s.hubReady ? html`<div class=${"board board-hub" + (s.hub === "in" ? " in" : s.hub === "out" ? " out" : " off")}><${Hub} ref=${(r) => (this._hub = r)} premount=${true} ...${hubProps} /></div>` : null)
         : s.hub ? html`<div class=${"board board-hub" + (s.hub === "out" ? " out" : "")}><${Hub} key=${s.hubKey} ...${hubProps} /></div>` : null}
