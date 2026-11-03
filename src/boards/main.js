@@ -60,7 +60,7 @@ ${(v?.hero?.hasLogo) ? html`<img src="${v?.hero?.logo}" alt="${v?.hero?.title}" 
 ${(v?.hero?.noLogo) ? html`${v?.hero?.title}` : null}
 </h1>
 <p style="position: relative; margin: 6px 0 0; display: flex; align-items: center; gap: 8px; font-size: 20px; font-weight: 500; color: #D5D7E0">
-<span style="font-size: 16px; font-weight: 400; letter-spacing: 0.01em">Sur</span>
+<span style="font-size: 18px; font-weight: 500; letter-spacing: 0.01em">Sur</span>
 <span aria-hidden="true" class="service-logo" style="display: inline-flex; align-items: center; height: 24px; color: #FFFFFF; filter: drop-shadow(0 1px 10px rgba(0, 0, 0, 0.35))">
 <span class="service-ph" style="display: inline-flex; align-items: center; justify-content: center; width: 64px; height: 24px; box-sizing: border-box; border-radius: 7px; background: rgba(255, 255, 255, 0.1); border: 1.5px dashed rgba(255, 255, 255, 0.45); color: #D5D7E0"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect><circle cx="9" cy="9" r="2"></circle><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path></svg></span>
 <svg class="rl rl-netflix" id="uuid-58aafc6a-06eb-438d-85c1-ea2cd7179cc6" data-name="Calque 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2500 675.68">
@@ -72,8 +72,8 @@ ${(v?.hero?.noLogo) ? html`${v?.hero?.title}` : null}
 </span>
 <span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap">Netflix</span>
 ${(v?.hero?.hasReason) ? html`
-<span style="display: inline-flex; align-items: center; height: 30px; margin-left: 12px; padding: 0 13px; box-sizing: border-box; border-radius: 15px; background: rgba(255, 255, 255, 0.14); border: 1px solid rgba(255, 255, 255, 0.24); backdrop-filter: blur(14px) saturate(140%); -webkit-backdrop-filter: blur(14px) saturate(140%); color: #F5F5F7; font-size: 15px; font-weight: 600; letter-spacing: 0.01em; white-space: nowrap; text-shadow: none">${v?.hero?.reason}</span>
-<span style="margin-left: 4px; font-size: 18px; font-weight: 500; color: #D5D7E0; white-space: nowrap">${v?.hero?.detail}</span>
+<span style="display: inline-flex; align-items: center; height: 30px; margin-left: 12px; padding: 0 13px; box-sizing: border-box; border-radius: 15px; background: rgba(255, 255, 255, 0.14); border: 1px solid rgba(255, 255, 255, 0.24); backdrop-filter: blur(14px) saturate(140%); -webkit-backdrop-filter: blur(14px) saturate(140%); color: #F5F5F7; font-size: 16px; font-weight: 600; letter-spacing: 0.01em; white-space: nowrap; text-shadow: none">${v?.hero?.reason}</span>
+<span style="margin-left: 4px; font-size: 20px; font-weight: 500; color: #E2E4EC; white-space: nowrap">${v?.hero?.detail}</span>
 ` : null}
 </p>
 </div>
@@ -85,7 +85,7 @@ ${(v?.hero?.hasLogo) ? html`<img src="${v?.hero?.logo}" alt="${v?.hero?.title}" 
 ${(v?.hero?.noLogo) ? html`${v?.hero?.title}` : null}
 </h1>
 <p style="position: relative; margin: 6px 0 0; display: flex; align-items: center; gap: 8px; font-size: 20px; font-weight: 500; color: #D5D7E0">
-<span style="font-size: 16px; font-weight: 400; letter-spacing: 0.01em">Sur</span>
+<span style="font-size: 18px; font-weight: 500; letter-spacing: 0.01em">Sur</span>
 <span aria-hidden="true" class="service-logo" style="display: inline-flex; align-items: center; height: 24px; color: #FFFFFF; filter: drop-shadow(0 1px 10px rgba(0, 0, 0, 0.35))">
 <span class="service-ph" style="display: inline-flex; align-items: center; justify-content: center; width: 64px; height: 24px; box-sizing: border-box; border-radius: 7px; background: rgba(255, 255, 255, 0.1); border: 1.5px dashed rgba(255, 255, 255, 0.45); color: #D5D7E0"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect><circle cx="9" cy="9" r="2"></circle><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path></svg></span>
 <svg class="rl rl-ps5" id="uuid-266facb8-2576-4dbb-ad44-42beae600b32" data-name="Calque 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 890.96 132.25" style="fill: #ffffff">
@@ -107,8 +107,8 @@ ${(v?.hero?.noLogo) ? html`${v?.hero?.title}` : null}
 </span>
 <span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap">PS5 Pro</span>
 ${(v?.hero?.hasReason) ? html`
-<span style="display: inline-flex; align-items: center; height: 30px; margin-left: 12px; padding: 0 13px; box-sizing: border-box; border-radius: 15px; background: rgba(255, 255, 255, 0.14); border: 1px solid rgba(255, 255, 255, 0.24); backdrop-filter: blur(14px) saturate(140%); -webkit-backdrop-filter: blur(14px) saturate(140%); color: #F5F5F7; font-size: 15px; font-weight: 600; letter-spacing: 0.01em; white-space: nowrap; text-shadow: none">${v?.hero?.reason}</span>
-<span style="margin-left: 4px; font-size: 18px; font-weight: 500; color: #D5D7E0; white-space: nowrap">${v?.hero?.detail}</span>
+<span style="display: inline-flex; align-items: center; height: 30px; margin-left: 12px; padding: 0 13px; box-sizing: border-box; border-radius: 15px; background: rgba(255, 255, 255, 0.14); border: 1px solid rgba(255, 255, 255, 0.24); backdrop-filter: blur(14px) saturate(140%); -webkit-backdrop-filter: blur(14px) saturate(140%); color: #F5F5F7; font-size: 16px; font-weight: 600; letter-spacing: 0.01em; white-space: nowrap; text-shadow: none">${v?.hero?.reason}</span>
+<span style="margin-left: 4px; font-size: 20px; font-weight: 500; color: #E2E4EC; white-space: nowrap">${v?.hero?.detail}</span>
 ` : null}
 </p>
 </div>
@@ -120,7 +120,7 @@ ${(v?.hero?.hasLogo) ? html`<img src="${v?.hero?.logo}" alt="${v?.hero?.title}" 
 ${(v?.hero?.noLogo) ? html`${v?.hero?.title}` : null}
 </h1>
 <p style="position: relative; margin: 6px 0 0; display: flex; align-items: center; gap: 8px; font-size: 20px; font-weight: 500; color: #D5D7E0">
-<span style="font-size: 16px; font-weight: 400; letter-spacing: 0.01em">Sur</span>
+<span style="font-size: 18px; font-weight: 500; letter-spacing: 0.01em">Sur</span>
 <span aria-hidden="true" class="service-logo" style="display: inline-flex; align-items: center; height: 24px; color: #FFFFFF; filter: drop-shadow(0 1px 10px rgba(0, 0, 0, 0.35))">
 <span class="service-ph" style="display: inline-flex; align-items: center; justify-content: center; width: 64px; height: 24px; box-sizing: border-box; border-radius: 7px; background: rgba(255, 255, 255, 0.1); border: 1.5px dashed rgba(255, 255, 255, 0.45); color: #D5D7E0"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect><circle cx="9" cy="9" r="2"></circle><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path></svg></span>
 <svg class="rl rl-appletv" xmlns="http://www.w3.org/2000/svg" xml:space="preserve" viewBox="0 0 53.231222 26.889077">
@@ -132,8 +132,8 @@ ${(v?.hero?.noLogo) ? html`${v?.hero?.title}` : null}
 </span>
 <span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap">Apple TV</span>
 ${(v?.hero?.hasReason) ? html`
-<span style="display: inline-flex; align-items: center; height: 30px; margin-left: 12px; padding: 0 13px; box-sizing: border-box; border-radius: 15px; background: rgba(255, 255, 255, 0.14); border: 1px solid rgba(255, 255, 255, 0.24); backdrop-filter: blur(14px) saturate(140%); -webkit-backdrop-filter: blur(14px) saturate(140%); color: #F5F5F7; font-size: 15px; font-weight: 600; letter-spacing: 0.01em; white-space: nowrap; text-shadow: none">${v?.hero?.reason}</span>
-<span style="margin-left: 4px; font-size: 18px; font-weight: 500; color: #D5D7E0; white-space: nowrap">${v?.hero?.detail}</span>
+<span style="display: inline-flex; align-items: center; height: 30px; margin-left: 12px; padding: 0 13px; box-sizing: border-box; border-radius: 15px; background: rgba(255, 255, 255, 0.14); border: 1px solid rgba(255, 255, 255, 0.24); backdrop-filter: blur(14px) saturate(140%); -webkit-backdrop-filter: blur(14px) saturate(140%); color: #F5F5F7; font-size: 16px; font-weight: 600; letter-spacing: 0.01em; white-space: nowrap; text-shadow: none">${v?.hero?.reason}</span>
+<span style="margin-left: 4px; font-size: 20px; font-weight: 500; color: #E2E4EC; white-space: nowrap">${v?.hero?.detail}</span>
 ` : null}
 </p>
 </div>
@@ -145,7 +145,7 @@ ${(v?.hero?.hasLogo) ? html`<img src="${v?.hero?.logo}" alt="${v?.hero?.title}" 
 ${(v?.hero?.noLogo) ? html`${v?.hero?.title}` : null}
 </h1>
 <p style="position: relative; margin: 6px 0 0; display: flex; align-items: center; gap: 8px; font-size: 20px; font-weight: 500; color: #D5D7E0">
-<span style="font-size: 16px; font-weight: 400; letter-spacing: 0.01em">Sur</span>
+<span style="font-size: 18px; font-weight: 500; letter-spacing: 0.01em">Sur</span>
 <span aria-hidden="true" class="service-logo" style="display: inline-flex; align-items: center; height: 24px; color: #FFFFFF; filter: drop-shadow(0 1px 10px rgba(0, 0, 0, 0.35))">
 <span class="service-ph" style="display: inline-flex; align-items: center; justify-content: center; width: 64px; height: 24px; box-sizing: border-box; border-radius: 7px; background: rgba(255, 255, 255, 0.1); border: 1.5px dashed rgba(255, 255, 255, 0.45); color: #D5D7E0"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect><circle cx="9" cy="9" r="2"></circle><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path></svg></span>
 <svg class="rl rl-crunchyroll" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 303 52">
@@ -154,8 +154,8 @@ ${(v?.hero?.noLogo) ? html`${v?.hero?.title}` : null}
 </span>
 <span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap">Crunchyroll</span>
 ${(v?.hero?.hasReason) ? html`
-<span style="display: inline-flex; align-items: center; height: 30px; margin-left: 12px; padding: 0 13px; box-sizing: border-box; border-radius: 15px; background: rgba(255, 255, 255, 0.14); border: 1px solid rgba(255, 255, 255, 0.24); backdrop-filter: blur(14px) saturate(140%); -webkit-backdrop-filter: blur(14px) saturate(140%); color: #F5F5F7; font-size: 15px; font-weight: 600; letter-spacing: 0.01em; white-space: nowrap; text-shadow: none">${v?.hero?.reason}</span>
-<span style="margin-left: 4px; font-size: 18px; font-weight: 500; color: #D5D7E0; white-space: nowrap">${v?.hero?.detail}</span>
+<span style="display: inline-flex; align-items: center; height: 30px; margin-left: 12px; padding: 0 13px; box-sizing: border-box; border-radius: 15px; background: rgba(255, 255, 255, 0.14); border: 1px solid rgba(255, 255, 255, 0.24); backdrop-filter: blur(14px) saturate(140%); -webkit-backdrop-filter: blur(14px) saturate(140%); color: #F5F5F7; font-size: 16px; font-weight: 600; letter-spacing: 0.01em; white-space: nowrap; text-shadow: none">${v?.hero?.reason}</span>
+<span style="margin-left: 4px; font-size: 20px; font-weight: 500; color: #E2E4EC; white-space: nowrap">${v?.hero?.detail}</span>
 ` : null}
 </p>
 </div>
@@ -167,7 +167,7 @@ ${(v?.hero?.hasLogo) ? html`<img src="${v?.hero?.logo}" alt="${v?.hero?.title}" 
 ${(v?.hero?.noLogo) ? html`${v?.hero?.title}` : null}
 </h1>
 <p style="position: relative; margin: 6px 0 0; display: flex; align-items: center; gap: 8px; font-size: 20px; font-weight: 500; color: #D5D7E0">
-<span style="font-size: 16px; font-weight: 400; letter-spacing: 0.01em">Sur</span>
+<span style="font-size: 18px; font-weight: 500; letter-spacing: 0.01em">Sur</span>
 <span aria-hidden="true" class="service-logo" style="display: inline-flex; align-items: center; height: 24px; color: #FFFFFF; filter: drop-shadow(0 1px 10px rgba(0, 0, 0, 0.35))">
 <span class="service-ph" style="display: inline-flex; align-items: center; justify-content: center; width: 64px; height: 24px; box-sizing: border-box; border-radius: 7px; background: rgba(255, 255, 255, 0.1); border: 1.5px dashed rgba(255, 255, 255, 0.45); color: #D5D7E0"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect><circle cx="9" cy="9" r="2"></circle><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path></svg></span>
 <svg class="rl rl-youtube" id="uuid-868f0d4d-cba3-4fb1-baf2-e231ec2a0cbe" data-name="Mode Isolation" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 923.08 205.94" style="fill: #ffffff">
@@ -192,8 +192,8 @@ ${(v?.hero?.noLogo) ? html`${v?.hero?.title}` : null}
 </span>
 <span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap">YouTube</span>
 ${(v?.hero?.hasReason) ? html`
-<span style="display: inline-flex; align-items: center; height: 30px; margin-left: 12px; padding: 0 13px; box-sizing: border-box; border-radius: 15px; background: rgba(255, 255, 255, 0.14); border: 1px solid rgba(255, 255, 255, 0.24); backdrop-filter: blur(14px) saturate(140%); -webkit-backdrop-filter: blur(14px) saturate(140%); color: #F5F5F7; font-size: 15px; font-weight: 600; letter-spacing: 0.01em; white-space: nowrap; text-shadow: none">${v?.hero?.reason}</span>
-<span style="margin-left: 4px; font-size: 18px; font-weight: 500; color: #D5D7E0; white-space: nowrap">${v?.hero?.detail}</span>
+<span style="display: inline-flex; align-items: center; height: 30px; margin-left: 12px; padding: 0 13px; box-sizing: border-box; border-radius: 15px; background: rgba(255, 255, 255, 0.14); border: 1px solid rgba(255, 255, 255, 0.24); backdrop-filter: blur(14px) saturate(140%); -webkit-backdrop-filter: blur(14px) saturate(140%); color: #F5F5F7; font-size: 16px; font-weight: 600; letter-spacing: 0.01em; white-space: nowrap; text-shadow: none">${v?.hero?.reason}</span>
+<span style="margin-left: 4px; font-size: 20px; font-weight: 500; color: #E2E4EC; white-space: nowrap">${v?.hero?.detail}</span>
 ` : null}
 </p>
 </div>
@@ -205,7 +205,7 @@ ${(v?.hero?.hasLogo) ? html`<img src="${v?.hero?.logo}" alt="${v?.hero?.title}" 
 ${(v?.hero?.noLogo) ? html`${v?.hero?.title}` : null}
 </h1>
 <p style="position: relative; margin: 6px 0 0; display: flex; align-items: center; gap: 8px; font-size: 20px; font-weight: 500; color: #D5D7E0">
-<span style="font-size: 16px; font-weight: 400; letter-spacing: 0.01em">Sur</span>
+<span style="font-size: 18px; font-weight: 500; letter-spacing: 0.01em">Sur</span>
 <span aria-hidden="true" class="service-logo" style="display: inline-flex; align-items: center; height: 24px; color: #FFFFFF; filter: drop-shadow(0 1px 10px rgba(0, 0, 0, 0.35))">
 <span class="service-ph" style="display: inline-flex; align-items: center; justify-content: center; width: 64px; height: 24px; box-sizing: border-box; border-radius: 7px; background: rgba(255, 255, 255, 0.1); border: 1.5px dashed rgba(255, 255, 255, 0.45); color: #D5D7E0"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect><circle cx="9" cy="9" r="2"></circle><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path></svg></span>
 <svg class="rl rl-switch" id="uuid-3c57e04f-79d8-4ded-9123-4f10bc054ff2" data-name="katman 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 372.85 78.96" style="fill: #ffffff">
@@ -217,8 +217,8 @@ ${(v?.hero?.noLogo) ? html`${v?.hero?.title}` : null}
 </span>
 <span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap">Nintendo Switch</span>
 ${(v?.hero?.hasReason) ? html`
-<span style="display: inline-flex; align-items: center; height: 30px; margin-left: 12px; padding: 0 13px; box-sizing: border-box; border-radius: 15px; background: rgba(255, 255, 255, 0.14); border: 1px solid rgba(255, 255, 255, 0.24); backdrop-filter: blur(14px) saturate(140%); -webkit-backdrop-filter: blur(14px) saturate(140%); color: #F5F5F7; font-size: 15px; font-weight: 600; letter-spacing: 0.01em; white-space: nowrap; text-shadow: none">${v?.hero?.reason}</span>
-<span style="margin-left: 4px; font-size: 18px; font-weight: 500; color: #D5D7E0; white-space: nowrap">${v?.hero?.detail}</span>
+<span style="display: inline-flex; align-items: center; height: 30px; margin-left: 12px; padding: 0 13px; box-sizing: border-box; border-radius: 15px; background: rgba(255, 255, 255, 0.14); border: 1px solid rgba(255, 255, 255, 0.24); backdrop-filter: blur(14px) saturate(140%); -webkit-backdrop-filter: blur(14px) saturate(140%); color: #F5F5F7; font-size: 16px; font-weight: 600; letter-spacing: 0.01em; white-space: nowrap; text-shadow: none">${v?.hero?.reason}</span>
+<span style="margin-left: 4px; font-size: 20px; font-weight: 500; color: #E2E4EC; white-space: nowrap">${v?.hero?.detail}</span>
 ` : null}
 </p>
 </div>
@@ -230,7 +230,7 @@ ${(v?.hero?.hasLogo) ? html`<img src="${v?.hero?.logo}" alt="${v?.hero?.title}" 
 ${(v?.hero?.noLogo) ? html`${v?.hero?.title}` : null}
 </h1>
 <p style="position: relative; margin: 6px 0 0; display: flex; align-items: center; gap: 8px; font-size: 20px; font-weight: 500; color: #D5D7E0">
-<span style="font-size: 16px; font-weight: 400; letter-spacing: 0.01em">Sur</span>
+<span style="font-size: 18px; font-weight: 500; letter-spacing: 0.01em">Sur</span>
 <span aria-hidden="true" class="service-logo" style="display: inline-flex; align-items: center; height: 24px; color: #FFFFFF; filter: drop-shadow(0 1px 10px rgba(0, 0, 0, 0.35))">
 <span class="service-ph" style="display: inline-flex; align-items: center; justify-content: center; width: 64px; height: 24px; box-sizing: border-box; border-radius: 7px; background: rgba(255, 255, 255, 0.1); border: 1.5px dashed rgba(255, 255, 255, 0.45); color: #D5D7E0"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect><circle cx="9" cy="9" r="2"></circle><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path></svg></span>
 <svg class="rl rl-disney" id="uuid-db936074-7144-49df-9273-9345b1d5aadf-reco" data-name="Calque 1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 1040.44 564.42">
@@ -260,8 +260,8 @@ ${(v?.hero?.noLogo) ? html`${v?.hero?.title}` : null}
 </span>
 <span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap">Disney+</span>
 ${(v?.hero?.hasReason) ? html`
-<span style="display: inline-flex; align-items: center; height: 30px; margin-left: 12px; padding: 0 13px; box-sizing: border-box; border-radius: 15px; background: rgba(255, 255, 255, 0.14); border: 1px solid rgba(255, 255, 255, 0.24); backdrop-filter: blur(14px) saturate(140%); -webkit-backdrop-filter: blur(14px) saturate(140%); color: #F5F5F7; font-size: 15px; font-weight: 600; letter-spacing: 0.01em; white-space: nowrap; text-shadow: none">${v?.hero?.reason}</span>
-<span style="margin-left: 4px; font-size: 18px; font-weight: 500; color: #D5D7E0; white-space: nowrap">${v?.hero?.detail}</span>
+<span style="display: inline-flex; align-items: center; height: 30px; margin-left: 12px; padding: 0 13px; box-sizing: border-box; border-radius: 15px; background: rgba(255, 255, 255, 0.14); border: 1px solid rgba(255, 255, 255, 0.24); backdrop-filter: blur(14px) saturate(140%); -webkit-backdrop-filter: blur(14px) saturate(140%); color: #F5F5F7; font-size: 16px; font-weight: 600; letter-spacing: 0.01em; white-space: nowrap; text-shadow: none">${v?.hero?.reason}</span>
+<span style="margin-left: 4px; font-size: 20px; font-weight: 500; color: #E2E4EC; white-space: nowrap">${v?.hero?.detail}</span>
 ` : null}
 </p>
 </div>
@@ -273,7 +273,7 @@ ${(v?.hero?.hasLogo) ? html`<img src="${v?.hero?.logo}" alt="${v?.hero?.title}" 
 ${(v?.hero?.noLogo) ? html`${v?.hero?.title}` : null}
 </h1>
 <p style="position: relative; margin: 6px 0 0; display: flex; align-items: center; gap: 8px; font-size: 20px; font-weight: 500; color: #D5D7E0">
-<span style="font-size: 16px; font-weight: 400; letter-spacing: 0.01em">Sur</span>
+<span style="font-size: 18px; font-weight: 500; letter-spacing: 0.01em">Sur</span>
 <span aria-hidden="true" class="service-logo" style="display: inline-flex; align-items: center; height: 24px; color: #FFFFFF; filter: drop-shadow(0 1px 10px rgba(0, 0, 0, 0.35))">
 <span class="service-ph" style="display: inline-flex; align-items: center; justify-content: center; width: 64px; height: 24px; box-sizing: border-box; border-radius: 7px; background: rgba(255, 255, 255, 0.1); border: 1.5px dashed rgba(255, 255, 255, 0.45); color: #D5D7E0"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect><circle cx="9" cy="9" r="2"></circle><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path></svg></span>
 <svg class="rl rl-paramount" xmlns="http://www.w3.org/2000/svg" viewBox="-161.599 -100.544 1000 622.214">
@@ -282,8 +282,8 @@ ${(v?.hero?.noLogo) ? html`${v?.hero?.title}` : null}
 </span>
 <span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap">Paramount+</span>
 ${(v?.hero?.hasReason) ? html`
-<span style="display: inline-flex; align-items: center; height: 30px; margin-left: 12px; padding: 0 13px; box-sizing: border-box; border-radius: 15px; background: rgba(255, 255, 255, 0.14); border: 1px solid rgba(255, 255, 255, 0.24); backdrop-filter: blur(14px) saturate(140%); -webkit-backdrop-filter: blur(14px) saturate(140%); color: #F5F5F7; font-size: 15px; font-weight: 600; letter-spacing: 0.01em; white-space: nowrap; text-shadow: none">${v?.hero?.reason}</span>
-<span style="margin-left: 4px; font-size: 18px; font-weight: 500; color: #D5D7E0; white-space: nowrap">${v?.hero?.detail}</span>
+<span style="display: inline-flex; align-items: center; height: 30px; margin-left: 12px; padding: 0 13px; box-sizing: border-box; border-radius: 15px; background: rgba(255, 255, 255, 0.14); border: 1px solid rgba(255, 255, 255, 0.24); backdrop-filter: blur(14px) saturate(140%); -webkit-backdrop-filter: blur(14px) saturate(140%); color: #F5F5F7; font-size: 16px; font-weight: 600; letter-spacing: 0.01em; white-space: nowrap; text-shadow: none">${v?.hero?.reason}</span>
+<span style="margin-left: 4px; font-size: 20px; font-weight: 500; color: #E2E4EC; white-space: nowrap">${v?.hero?.detail}</span>
 ` : null}
 </p>
 </div>
@@ -295,7 +295,7 @@ ${(v?.hero?.hasLogo) ? html`<img src="${v?.hero?.logo}" alt="${v?.hero?.title}" 
 ${(v?.hero?.noLogo) ? html`${v?.hero?.title}` : null}
 </h1>
 <p style="position: relative; margin: 6px 0 0; display: flex; align-items: center; gap: 8px; font-size: 20px; font-weight: 500; color: #D5D7E0">
-<span style="font-size: 16px; font-weight: 400; letter-spacing: 0.01em">Sur</span>
+<span style="font-size: 18px; font-weight: 500; letter-spacing: 0.01em">Sur</span>
 <span aria-hidden="true" class="service-logo" style="display: inline-flex; align-items: center; height: 24px; color: #FFFFFF; filter: drop-shadow(0 1px 10px rgba(0, 0, 0, 0.35))">
 <span class="service-ph" style="display: inline-flex; align-items: center; justify-content: center; width: 64px; height: 24px; box-sizing: border-box; border-radius: 7px; background: rgba(255, 255, 255, 0.1); border: 1.5px dashed rgba(255, 255, 255, 0.45); color: #D5D7E0"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect><circle cx="9" cy="9" r="2"></circle><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path></svg></span>
 <svg class="rl rl-hbo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1240 894.5">
@@ -317,8 +317,8 @@ ${(v?.hero?.noLogo) ? html`${v?.hero?.title}` : null}
 </span>
 <span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap">HBO Max</span>
 ${(v?.hero?.hasReason) ? html`
-<span style="display: inline-flex; align-items: center; height: 30px; margin-left: 12px; padding: 0 13px; box-sizing: border-box; border-radius: 15px; background: rgba(255, 255, 255, 0.14); border: 1px solid rgba(255, 255, 255, 0.24); backdrop-filter: blur(14px) saturate(140%); -webkit-backdrop-filter: blur(14px) saturate(140%); color: #F5F5F7; font-size: 15px; font-weight: 600; letter-spacing: 0.01em; white-space: nowrap; text-shadow: none">${v?.hero?.reason}</span>
-<span style="margin-left: 4px; font-size: 18px; font-weight: 500; color: #D5D7E0; white-space: nowrap">${v?.hero?.detail}</span>
+<span style="display: inline-flex; align-items: center; height: 30px; margin-left: 12px; padding: 0 13px; box-sizing: border-box; border-radius: 15px; background: rgba(255, 255, 255, 0.14); border: 1px solid rgba(255, 255, 255, 0.24); backdrop-filter: blur(14px) saturate(140%); -webkit-backdrop-filter: blur(14px) saturate(140%); color: #F5F5F7; font-size: 16px; font-weight: 600; letter-spacing: 0.01em; white-space: nowrap; text-shadow: none">${v?.hero?.reason}</span>
+<span style="margin-left: 4px; font-size: 20px; font-weight: 500; color: #E2E4EC; white-space: nowrap">${v?.hero?.detail}</span>
 ` : null}
 </p>
 </div>
@@ -330,7 +330,7 @@ ${(v?.hero?.hasLogo) ? html`<img src="${v?.hero?.logo}" alt="${v?.hero?.title}" 
 ${(v?.hero?.noLogo) ? html`${v?.hero?.title}` : null}
 </h1>
 <p style="position: relative; margin: 6px 0 0; display: flex; align-items: center; gap: 8px; font-size: 20px; font-weight: 500; color: #D5D7E0">
-<span style="font-size: 16px; font-weight: 400; letter-spacing: 0.01em">Sur</span>
+<span style="font-size: 18px; font-weight: 500; letter-spacing: 0.01em">Sur</span>
 <span aria-hidden="true" class="service-logo" style="display: inline-flex; align-items: center; height: 24px; color: #FFFFFF; filter: drop-shadow(0 1px 10px rgba(0, 0, 0, 0.35))">
 <span class="service-ph" style="display: inline-flex; align-items: center; justify-content: center; width: 64px; height: 24px; box-sizing: border-box; border-radius: 7px; background: rgba(255, 255, 255, 0.1); border: 1.5px dashed rgba(255, 255, 255, 0.45); color: #D5D7E0"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect><circle cx="9" cy="9" r="2"></circle><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path></svg></span>
 <svg class="rl rl-canal" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 285.03 52.14">
@@ -339,8 +339,8 @@ ${(v?.hero?.noLogo) ? html`${v?.hero?.title}` : null}
 </span>
 <span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap">Canal+</span>
 ${(v?.hero?.hasReason) ? html`
-<span style="display: inline-flex; align-items: center; height: 30px; margin-left: 12px; padding: 0 13px; box-sizing: border-box; border-radius: 15px; background: rgba(255, 255, 255, 0.14); border: 1px solid rgba(255, 255, 255, 0.24); backdrop-filter: blur(14px) saturate(140%); -webkit-backdrop-filter: blur(14px) saturate(140%); color: #F5F5F7; font-size: 15px; font-weight: 600; letter-spacing: 0.01em; white-space: nowrap; text-shadow: none">${v?.hero?.reason}</span>
-<span style="margin-left: 4px; font-size: 18px; font-weight: 500; color: #D5D7E0; white-space: nowrap">${v?.hero?.detail}</span>
+<span style="display: inline-flex; align-items: center; height: 30px; margin-left: 12px; padding: 0 13px; box-sizing: border-box; border-radius: 15px; background: rgba(255, 255, 255, 0.14); border: 1px solid rgba(255, 255, 255, 0.24); backdrop-filter: blur(14px) saturate(140%); -webkit-backdrop-filter: blur(14px) saturate(140%); color: #F5F5F7; font-size: 16px; font-weight: 600; letter-spacing: 0.01em; white-space: nowrap; text-shadow: none">${v?.hero?.reason}</span>
+<span style="margin-left: 4px; font-size: 20px; font-weight: 500; color: #E2E4EC; white-space: nowrap">${v?.hero?.detail}</span>
 ` : null}
 </p>
 </div>
@@ -352,7 +352,7 @@ ${(v?.hero?.hasLogo) ? html`<img src="${v?.hero?.logo}" alt="${v?.hero?.title}" 
 ${(v?.hero?.noLogo) ? html`${v?.hero?.title}` : null}
 </h1>
 <p style="position: relative; margin: 6px 0 0; display: flex; align-items: center; gap: 8px; font-size: 20px; font-weight: 500; color: #D5D7E0">
-<span style="font-size: 16px; font-weight: 400; letter-spacing: 0.01em">Sur</span>
+<span style="font-size: 18px; font-weight: 500; letter-spacing: 0.01em">Sur</span>
 <span aria-hidden="true" class="service-logo" style="display: inline-flex; align-items: center; height: 24px; color: #FFFFFF; filter: drop-shadow(0 1px 10px rgba(0, 0, 0, 0.35))">
 <span class="service-ph" style="display: inline-flex; align-items: center; justify-content: center; width: 64px; height: 24px; box-sizing: border-box; border-radius: 7px; background: rgba(255, 255, 255, 0.1); border: 1.5px dashed rgba(255, 255, 255, 0.45); color: #D5D7E0"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect><circle cx="9" cy="9" r="2"></circle><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path></svg></span>
 <svg class="rl rl-prime" xmlns="http://www.w3.org/2000/svg" viewBox="3.957 4.029 24.607 24.611">
@@ -361,8 +361,8 @@ ${(v?.hero?.noLogo) ? html`${v?.hero?.title}` : null}
 </span>
 <span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap">Prime Video</span>
 ${(v?.hero?.hasReason) ? html`
-<span style="display: inline-flex; align-items: center; height: 30px; margin-left: 12px; padding: 0 13px; box-sizing: border-box; border-radius: 15px; background: rgba(255, 255, 255, 0.14); border: 1px solid rgba(255, 255, 255, 0.24); backdrop-filter: blur(14px) saturate(140%); -webkit-backdrop-filter: blur(14px) saturate(140%); color: #F5F5F7; font-size: 15px; font-weight: 600; letter-spacing: 0.01em; white-space: nowrap; text-shadow: none">${v?.hero?.reason}</span>
-<span style="margin-left: 4px; font-size: 18px; font-weight: 500; color: #D5D7E0; white-space: nowrap">${v?.hero?.detail}</span>
+<span style="display: inline-flex; align-items: center; height: 30px; margin-left: 12px; padding: 0 13px; box-sizing: border-box; border-radius: 15px; background: rgba(255, 255, 255, 0.14); border: 1px solid rgba(255, 255, 255, 0.24); backdrop-filter: blur(14px) saturate(140%); -webkit-backdrop-filter: blur(14px) saturate(140%); color: #F5F5F7; font-size: 16px; font-weight: 600; letter-spacing: 0.01em; white-space: nowrap; text-shadow: none">${v?.hero?.reason}</span>
+<span style="margin-left: 4px; font-size: 20px; font-weight: 500; color: #E2E4EC; white-space: nowrap">${v?.hero?.detail}</span>
 ` : null}
 </p>
 </div>
@@ -628,7 +628,7 @@ ${(item?.hasPeekImg) ? html`
 </span>
 ` : null}
 ${(item?.hasBadge) ? html`
-<span aria-hidden="true" style="position: absolute; left: 0; right: 0; bottom: 14px; display: flex; justify-content: center; pointer-events: none; transform: ${item?.layer}; transition: ${item?.layerTransition}"><span style="padding: 3px 10px; border-radius: 999px; background: ${item?.badgeBg}; color: ${item?.badgeFg}; font-size: 13px; font-weight: 600; letter-spacing: 0.01em">${item?.badge}</span></span>
+<span aria-hidden="true" style="position: absolute; left: 0; right: 0; bottom: 14px; display: flex; justify-content: center; pointer-events: none; transform: ${item?.layer}; transition: ${item?.layerTransition}"><span style="padding: 3px 10px; border-radius: 999px; background: ${item?.badgeBg}; color: ${item?.badgeFg}; font-size: 14px; font-weight: 600; letter-spacing: 0.01em">${item?.badge}</span></span>
 ` : null}
 <span aria-hidden="true" class="${item?.rimClass}" style="opacity: ${item?.rimOpacity}"><span class="tile-rim-rainbow" style="opacity: ${item?.rimRainbow}; animation: ${item?.rimSpin}"></span><span class="tile-rim-light" style="background: ${item?.rimLight}"></span></span>
 <span aria-hidden="true" class="tile-flare" style="left: ${item?.flareX}; opacity: ${item?.flareOpacity}"></span>
@@ -1772,7 +1772,8 @@ class Component extends DCLogic {
     }
     const slotOf = {};
     ordered.forEach((it, i) => { slotOf[it.id] = i; });
-    const pitch = 296.33, colW = 268.33, x0 = 85;
+    // Positions et tailles en pixels entiers : une tuile posée « entre deux pixels » ressort floue sur la TV.
+    const pitch = 296, colW = 268, x0 = 86;
     const pos = (slot) => slot < 6
       ? { x: x0 + slot * pitch, y: 814 }
       : { x: x0 + ((slot - 6) % 6) * pitch, y: 1036 + Math.floor((slot - 6) / 6) * 201 };
@@ -1868,11 +1869,11 @@ class Component extends DCLogic {
       const label = (it.note ? it.name + ", " + it.note : (it.label || it.name)) + (slot === 0 && !st.order ? ", dernière appli ouverte" : "");
       const t = Object.assign({}, it, lk, (it.source || it.tint) ? dark(on, it.tint, it.ink) : {}, handlers(it.id, inGrid, it.id, canOpen(it), it), {
         label: label,
-        x: p.x.toFixed(2) + "px",
+        x: Math.round(p.x) + "px",
         posTransition: posTransition,
         rowLag: (row * 70) + "px",
         rowAnim: rowAnim(row),
-        y: (p.y + heroDrop).toFixed(2) + "px",
+        y: Math.round(p.y + heroDrop) + "px",
         w: colW + "px",
         z: on ? "2" : "1",
         opacity: isHero ? "0" : "1",
@@ -2081,7 +2082,7 @@ class Component extends DCLogic {
       cardH: cardH + "px",
       cardR: Math.round(cardW * 0.075) + "px",
       cardGap: cardGap + "px",
-      cardTrackX: railX.toFixed(1) + "px",
+      cardTrackX: Math.round(railX) + "px",
       cardTrackTransition: motion ? "transform 520ms cubic-bezier(0.22, 1, 0.36, 1)" : "none",
       cardsOpacity: showCards ? "1" : "0",
       cardsShift: showCards ? "0px" : "40px",

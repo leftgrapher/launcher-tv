@@ -76,7 +76,8 @@ function fit() {
   const el = document.getElementById("launcher");
   if (!el) return;
   const k = Math.min(window.innerWidth / 1920, window.innerHeight / 1080);
-  el.style.transform = "scale(" + k + ")";
+  // À 1920×1080 pile (la TV), aucune transformation : rien n’est rééchantillonné.
+  el.style.transform = Math.abs(k - 1) < 0.001 ? "none" : "scale(" + k + ")";
   el.style.left = (window.innerWidth - 1920 * k) / 2 + "px";
   el.style.top = (window.innerHeight - 1080 * k) / 2 + "px";
 }

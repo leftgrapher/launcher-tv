@@ -109,6 +109,29 @@ def patch_hub_template(body):
     return body.replace(o, 'overflow: hidden; background: transparent;')
 
 
+def shrink(path, width=640):
+    """Logos des tuiles : 640 px de large suffisent (2 fois leur taille à l’écran). Une image 4 fois trop grande,
+    réduite par la TV à chaque image, ressort crénelée et coûte de la mémoire."""
+    try:
+        from PIL import Image
+    except ImportError:
+        return
+    if not re.search(r'\.(png|webp|jpe?g)$', path, re.I):
+        return
+    im = Image.open(path)
+    if im.width <= width:
+        return
+    h = round(im.height * width / im.width)
+    im = im.convert('RGBA') if im.mode in ('P', 'LA') else im
+    out = im.resize((width, h), Image.LANCZOS)
+    if path.lower().endswith('.webp'):
+        out.save(path, 'WEBP', quality=92, method=6)
+    elif path.lower().endswith('.png'):
+        out.save(path, 'PNG', optimize=True)
+    else:
+        out.convert('RGB').save(path, 'JPEG', quality=90)
+
+
 def main():
     bm = blob_map()
     os.makedirs(os.path.join(OUT, 'src', 'boards'), exist_ok=True)
@@ -142,7 +165,10 @@ def main():
     os.makedirs(os.path.join(OUT, 'private', 'assets'), exist_ok=True)
     for i in sorted(used):
         dest = 'private' if i in PRIVATE else 'public'
-        shutil.copy(os.path.join(BLOBS, bm[i]), os.path.join(OUT, dest, 'assets', bm[i]))
+        target = os.path.join(OUT, dest, 'assets', bm[i])
+        shutil.copy(os.path.join(BLOBS, bm[i]), target)
+        if dest == 'public':
+            shrink(target)
     print('planches converties ; %d fichiers d’images/polices copiés (%d privés)' % (len(used), len(used & PRIVATE)))
 
 
