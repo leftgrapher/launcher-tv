@@ -273,17 +273,42 @@ const err = (e) => ((e && ((e.name || "") + " " + (e.message || "")).trim()) || 
 
 // Fenêtre découpée dans l’interface (coins arrondis compris) à l’endroit de la tuile : l’image en direct, placée
 // sous l’interface, n’est visible que là, exactement dans le cadre de la tuile.
-function setHole(h) {
-  if (!html) return;
-  if (!h) { cls("v-hole", false); return; }
+let holeT = null;
+function setHole(h, later) {
+  const root = document.querySelector("[data-launcher]");
+  if (!root) return;
+  const st = root.style;
+  clearTimeout(holeT);
+  if (!h) {
+    const clear = () => ["-webkit-mask-image", "-webkit-mask-size", "-webkit-mask-position", "-webkit-mask-repeat", "-webkit-mask-composite", "mask-composite"].forEach((p) => st.removeProperty(p));
+    if (!later || !st.getPropertyValue("-webkit-mask-image")) { clear(); return; }
+    // Fermeture rapide : la fenêtre est simplement poussée hors de l’écran (l’interface redevient opaque partout tout de
+    // suite) ; le masque lui-même n’est retiré qu’ensuite, quand la tuile suivante est affichée.
+    st.setProperty("-webkit-mask-position", "0 0, -4000px -4000px");
+    holeT = setTimeout(clear, later);
+    return;
+  }
   const svg = "<svg xmlns='http://www.w3.org/2000/svg' width='" + h.w + "' height='" + h.h + "'><rect width='" + h.w + "' height='" + h.h + "' rx='" + h.r + "' ry='" + h.r + "' fill='black'/></svg>";
-  const st = html.style;
-  st.setProperty("--hole-img", "url(\"data:image/svg+xml;utf8," + encodeURIComponent(svg) + "\")");
-  st.setProperty("--hole-x", h.x + "px");
-  st.setProperty("--hole-y", h.y + "px");
-  st.setProperty("--hole-w", h.w + "px");
-  st.setProperty("--hole-h", h.h + "px");
-  cls("v-hole", true);
+  st.setProperty("-webkit-mask-image", "linear-gradient(#000,#000), url(\"data:image/svg+xml;utf8," + encodeURIComponent(svg) + "\")");
+  st.setProperty("-webkit-mask-size", "100% 100%, " + h.w + "px " + h.h + "px");
+  st.setProperty("-webkit-mask-position", "0 0, " + h.x + "px " + h.y + "px");
+  st.setProperty("-webkit-mask-repeat", "no-repeat");
+  st.setProperty("-webkit-mask-composite", "xor");
+  st.setProperty("mask-composite", "exclude");
+}
+
+// Position réelle de l’image en direct (pour le panneau Info) : la TV a-t-elle bien pris la taille demandée ?
+function checkRect(want, g) {
+  try {
+    T.tvwindow.getRect((r) => {
+      if (g !== live.gen) return;
+      const got = (r || []).map((v) => Math.round(parseFloat(v)));
+      const exp = [want.x, want.y, want.w, want.h].map(Math.round);
+      const off = got.length === 4 && got.some((v, i) => Math.abs(v - exp[i]) > 3);
+      note("aperçu : demandé " + exp.join(",") + " · TV " + got.join(",") + (off ? " → recalé" : ""));
+      if (off) tvShow(want, "BEHIND").catch(() => {});
+    }, () => {}, "px", "MAIN");
+  } catch (e) {}
 }
 
 // Aperçu en direct dans une tuile. hole : intérieur du cadre de la tuile en coordonnées 1920×1080, avec son arrondi
@@ -311,8 +336,8 @@ export async function preview(n, hole) {
     const rect = { x: hole.x + hole.w / 2 - w / 2, y: hole.y + hole.h / 2 - h / 2, w, h };
     await tvShow(rect, "BEHIND");
     if (g !== live.gen) { tvHide(); return false; }
-    // Redonnée un peu plus tard : juste après le lecteur des fonds 4K, la TV peut remettre l’image à sa taille précédente.
-    setTimeout(() => { if (g === live.gen) tvShow(rect, "BEHIND").catch(() => {}); }, 350);
+    // Vérifiée un peu plus tard : si la TV a gardé une autre taille, on la redonne.
+    setTimeout(() => { if (g === live.gen) checkRect(rect, g); }, 350);
     setHole({ x: Math.round(hole.x), y: Math.round(hole.y), w: Math.round(hole.w), h: Math.round(hole.h), r: Math.round(hole.r) });
     note("aperçu en direct HDMI " + n);
     return true;
@@ -329,8 +354,10 @@ export function stopPreview() {
   if (live.mode !== "preview") return;
   const g = ++live.gen;
   live.mode = null;
-  setHole(null);
-  setTimeout(() => { if (g === live.gen || live.mode !== "preview") tvHide(); }, 30);
+  setHole(null, 600);
+  // L’image en direct est déjà cachée par l’interface redevenue opaque : on la retire plus tard, une fois la tuile
+  // suivante affichée (cet appel à la TV peut bloquer un instant).
+  setTimeout(() => { if (g === live.gen) tvHide(); }, 600);
   resumeBg();
 }
 

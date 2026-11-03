@@ -66,6 +66,7 @@ export function makeBoards(html) {
       document.removeEventListener("visibilitychange", this._onVis);
       clearTimeout(this._tvT);
       clearTimeout(this._safeT);
+      clearTimeout(this._pvT);
     }
 
     componentDidUpdate(prevProps, prevState) {
@@ -97,7 +98,16 @@ export function makeBoards(html) {
       const srcFocus = view === "home" && !!n;
       video.wantBg(calmBg && !srcFocus && (view === "home" || view === "hero") && cur && cur.bg4k ? cur.bg4k : null);
       // Aperçu : quand la tuile d’une source HDMI reste sélectionnée, son image en direct s’affiche dans la tuile.
+      // La tuile doit avoir fini de grandir (rebond compris) avant qu’on mesure sa place : sinon, en revenant vite sur
+      // la PS5, l’image en direct se calait sur une tuile encore en mouvement, donc décalée.
+      if (f !== this._lastFocus) { this._lastFocus = f; this._focusAt = Date.now(); }
       const want = calm && !!n && s.peek === f && view === "home" && this.props.apercuDirect !== false;
+      const since = Date.now() - (this._focusAt || 0);
+      if (want && this._pvFor !== f && since < 800) {
+        clearTimeout(this._pvT);
+        this._pvT = setTimeout(() => this._tvVideo(), 820 - since);
+        return;
+      }
       if (want && this._pvFor !== f) {
         const el = document.querySelector('[data-tile="' + f + '"]');
         if (!el) return;

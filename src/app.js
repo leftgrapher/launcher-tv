@@ -53,6 +53,8 @@ const PERF_CSS = `
 const PERF = cfg.perf != null ? !!cfg.perf : onTV;
 
 // Sur la TV : ouverture des sources (launch-fx.js) et plan vidéo sous l’interface (video.js).
+// La page elle-même est transparente en permanence (le fond sombre est celui de l’accueil) : la changer à chaque aperçu
+// ou fond 4K obligeait la TV à redessiner tout l’écran.
 // Réactivité d’abord : seules des transformations et des fondus sont animés (la TV les calcule à part, sans retarder
 // la touche suivante) ; couleurs, bordures et ombres changent d’un coup. Le hub glisse en un seul bloc au lieu de faire
 // apparaître ses boutons un par un, et l’aperçu en image des tuiles est retiré (seule l’image en direct d’une source reste).
@@ -68,20 +70,17 @@ const TV_CSS = `
 .lfx-face{position:absolute!important;transform-origin:50% 50%!important;background:transparent!important;border-color:transparent!important;
   box-shadow:none!important;animation:none!important;transition:none!important;scale:none!important;rotate:none!important;margin:0!important;will-change:transform}
 .lfx-hide{opacity:0!important;transition:none!important;animation:none!important}
-html.v-under,html.v-under body{background:transparent!important}
+html,body{background:transparent!important}
 html.v-under [data-launcher]{background:transparent!important}
 html.v-under [data-herobase]{visibility:hidden}
 html.v-hero [data-herobg="1"]{opacity:0!important}
 html.v-snap [data-herobg]{transition:none!important}
-html.v-full,html.v-full body{background:transparent!important}
 html.v-full .board{visibility:hidden}
 html.v-return .board{animation:vReturn 320ms ease both}
 @keyframes vReturn{from{opacity:0}to{opacity:1}}
 html.v-quit #launcher{opacity:0;transition:opacity 240ms ease}
-html.v-hole,html.v-hole body{background:transparent!important}
-html.v-hole [data-launcher]{-webkit-mask-image:linear-gradient(#000,#000),var(--hole-img);-webkit-mask-size:100% 100%,var(--hole-w) var(--hole-h);
-  -webkit-mask-position:0 0,var(--hole-x) var(--hole-y);-webkit-mask-repeat:no-repeat;-webkit-mask-composite:xor;mask-composite:exclude}
-html.v-hole [data-tile] *{animation:none!important}
+[data-dots]{filter:none!important}
+[data-dots]>span{box-shadow:0 1px 5px rgba(0,0,0,.35)}
 .lfx-wait>span:first-child{animation:lfxPulse 1.1s ease-in-out infinite!important}
 .lfx-wait[data-card]{animation:lfxPulse2 1.1s ease-in-out infinite!important}
 @keyframes lfxPulse{0%,100%{opacity:1}50%{opacity:.3}}

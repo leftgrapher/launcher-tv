@@ -369,7 +369,7 @@ ${(v?.hero?.hasReason) ? html`
 ` : null}
 </section>
 
-<div aria-hidden="true" style="position: absolute; left: 0; right: 0; top: 757px; display: flex; justify-content: center; gap: 8px; pointer-events: none; filter: drop-shadow(0 1px 6px rgba(0, 0, 0, 0.35)); opacity: ${v?.dotsOpacity}; transition: ${v?.dotsTransition}">
+<div aria-hidden="true" data-dots="1" style="position: absolute; left: 56px; top: 745px; display: flex; justify-content: flex-start; gap: 8px; pointer-events: none; filter: drop-shadow(0 1px 6px rgba(0, 0, 0, 0.35)); opacity: ${v?.dotsOpacity}; transition: ${v?.dotsTransition}">
 ${(v?.dots || []).map((d, $index) => html`
 <span style="position: relative; display: block; overflow: hidden; width: ${d?.w}; height: 4px; border-radius: 2px; background: rgba(255, 255, 255, 0.28); transition: width 400ms ease">
 <span style="position: absolute; inset: 0; border-radius: 2px; background: #F5F5F7; transform-origin: left center; transform: scaleX(${d?.fill}); animation: ${d?.anim}"></span>
