@@ -396,7 +396,6 @@ ${(v?.tiles || []).map((item, $index) => html`
 <div style="position: absolute; left: 0; top: 0; z-index: ${item?.z}; transform: translate3d(${item?.x}, ${item?.y}, 0); transition: ${item?.posTransition}; --lag: ${item?.rowLag}; animation: ${item?.rowAnim}; will-change: transform; pointer-events: none">
 <span aria-hidden="true" style="position: absolute; left: 0; top: 0; width: ${item?.w}; height: 161px; border-radius: 22px; box-shadow: ${item?.glow}; opacity: ${item?.glowOn}; transform: ${item?.transform}; scale: ${item?.lift}; animation: ${item?.bounce}; transition: ${item?.glowTransition}; will-change: opacity, transform; pointer-events: none"></span>
 <button type="button" data-tile="${item?.id}" aria-label="${item?.label}" onClick="${item?.open}" onFocus="${item?.pick}" onMouseEnter="${item?.pick}" onMouseMove="${item?.move}" onMouseLeave="${item?.leave}" onMouseDown="${item?.down}" onMouseUp="${item?.up}" style="position: relative; width: ${item?.w}; height: 161px; overflow: hidden; border-radius: 22px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; background: ${item?.bg}; background-origin: border-box; background-repeat: no-repeat; color: ${item?.fg}; border: 1px solid ${item?.border}; transform: ${item?.transform}; box-shadow: ${item?.shadow}; opacity: ${item?.opacity}; transition: ${item?.tileTransition}; animation: ${item?.bounce}; scale: ${item?.lift}; will-change: transform; pointer-events: auto">
-<span aria-hidden="true" style="position: absolute; inset: 0; pointer-events: none; opacity: ${item?.sheen}; background: ${item?.sheenBg}; transition: opacity 240ms ease"></span>
 ${(item?.isPs5) ? html`
 <span aria-hidden="true" style="position: relative; display: flex; flex-direction: column; align-items: center; gap: 8px; color: #ffffff; transform: ${item?.layer}; transition: ${item?.layerTransition}">
 <svg id="uuid-8e0a8c63-6762-4426-82b4-d42a7cc9ca04" data-name="Calque 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 890.96 132.25" style="fill: #f5f5f7; width: 149px; height: 22px">
@@ -598,9 +597,7 @@ ${(item?.art_reglages) ? html`
 <circle cx="125.0" cy="75.0" r="10.2" fill="none" stroke="#FFFFFF" stroke-opacity="0.5" stroke-width="0.5"></circle>
 </svg></span>
 ` : null}
-${(item?.isArt) ? html`
-<span aria-hidden="true" style="position: absolute; inset: 0; pointer-events: none; opacity: ${item?.artSheen}; background: ${item?.sheenBg}; transition: opacity 240ms ease"></span>
-` : null}
+<span aria-hidden="true" data-glare="1" style="position: absolute; inset: 0; pointer-events: none; opacity: ${item?.sheen}; background: ${item?.sheenBg}; transition: opacity 240ms ease"></span>
 ${(item?.hasPeek) ? html`
 <span aria-hidden="true" data-peek="1" style="position: absolute; inset: 0; overflow: hidden; border-radius: inherit; pointer-events: none; opacity: ${item?.peekOpacity}; transition: opacity 700ms ease; background: radial-gradient(circle at 72% 46%, ${item?.pk?.glowA} 0%, rgba(0, 0, 0, 0) 48%), linear-gradient(180deg, ${item?.pk?.sky0} 0%, ${item?.pk?.sky1} 34%, ${item?.pk?.sky2} 46%, ${item?.pk?.sky2} 100%)">
 <svg viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice" style="position: absolute; inset: 0; width: 100%; height: 100%; transform-origin: 62% 48%; animation: ${item?.peekAnim}">
@@ -1712,11 +1709,12 @@ class Component extends DCLogic {
       border: on ? "rgba(255, 255, 255, 0.85)" : "rgba(255, 255, 255, 0.16)",
       shadow: on
         ? "inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 34px 60px rgba(0, 0, 0, 0.55), 0 10px 20px rgba(0, 0, 0, 0.3)"
-        : "inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 6px 18px rgba(0, 0, 0, 0.25), 0 2px 6px rgba(0, 0, 0, 0.12)",
-      sheenBg: on && motion
-        ? "radial-gradient(circle at " + (tilt.x * 100).toFixed(1) + "% " + (tilt.y * 100).toFixed(1) + "%, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0) 60%)"
-        : "none"
+        : "inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 6px 18px rgba(0, 0, 0, 0.25), 0 2px 6px rgba(0, 0, 0, 0.12)"
     });
+    // Reflet de la tuile sélectionnée : le même pour toutes (couleur, image ou source), posé au-dessus du logo comme sur
+    // l’Apple TV, toujours au même endroit (là où pointe la souris, sinon en haut au centre) et avec la même force.
+    const glareRest = { x: 0.5, y: 0.3 };
+    const glareAt = (t) => "radial-gradient(75% 95% at " + (t.x * 100).toFixed(1) + "% " + (t.y * 100).toFixed(1) + "%, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.07) 45%, rgba(255, 255, 255, 0) 100%)";
 
     // Rebond : joué une seule fois quand la tuile devient sélectionnée, puis retiré (pas de rejeu au retour du hub).
     if (this._bounceFor !== focus) {
@@ -1827,7 +1825,7 @@ class Component extends DCLogic {
       const L = lum(g);
       const k = L > 0.75 ? 0.5 : L > 0.55 ? 0.8 : 1;
       const lightTile = it.tint === "#FFFFFF";
-      const highlight = "radial-gradient(70% 95% at " + lx + " " + ly + ", rgba(255, 255, 255, " + (0.95 * (k < 1 ? 0.8 : 1)).toFixed(2) + ") 0%, rgba(255, 255, 255, 0.25) 40%, rgba(255, 255, 255, 0) 70%)";
+      const highlight = "radial-gradient(70% 95% at " + lx + " " + ly + ", rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.25) 40%, rgba(255, 255, 255, 0) 70%)";
       if (selStyle === "neon") {
         return {
           shadow: ["inset 0 1px 0 rgba(255, 255, 255, 0.4)", "-16px -10px 44px rgba(178, 70, 255, 0.75)", "16px 10px 44px rgba(0, 210, 255, 0.68)", "0 0 100px 16px rgba(110, 100, 255, 0.4)", depth].join(", "),
@@ -1896,7 +1894,8 @@ class Component extends DCLogic {
         artH: it.artH || "100%",
         artFit: it.artFit || "cover",
         artClip: "none",
-        artSheen: on && motion ? "0.45" : "0"
+        sheen: on && motion ? "1" : "0",
+        sheenBg: glareAt(on ? tilt : glareRest)
       }, peekFields(it, slot < 6), selFx(it, on));
       artApps.forEach((id) => { t["art_" + id] = (it.logo || it.id) === id; });
       // Mode « modifier » : tremblement (décalé d’une tuile à l’autre) ; l’appli tenue se soulève et ne tremble plus.
