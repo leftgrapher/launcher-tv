@@ -34,12 +34,20 @@ jobs:
           key: recos-${{ github.run_id }}
           restore-keys: recos-
       - name: ffmpeg (fonds 4K des recos)
-        # Sans ffmpeg, les recos sont faites quand même (sans fonds 4K) : cette étape ne doit jamais bloquer la mise à jour.
+        # Version prête à l’emploi publiée sur GitHub (BtbN, avec x265), apt en secours.
+        # Sans ffmpeg, les recos sont faites quand même avec les fonds 4K déjà prêts : cette étape ne bloque jamais la mise à jour.
         timeout-minutes: 4
         continue-on-error: true
-        env:
-          DEBIAN_FRONTEND: noninteractive
-        run: command -v ffmpeg || (sudo apt-get update -qq -o Acquire::Retries=2 && sudo apt-get install -y -qq --no-install-recommends -o DPkg::Lock::Timeout=60 ffmpeg)
+        run: |
+          set -o pipefail
+          if command -v ffmpeg >/dev/null && ffmpeg -hide_banner -encoders 2>/dev/null | grep -q libx265; then exit 0; fi
+          d="$RUNNER_TEMP/ffmpeg"; mkdir -p "$d"
+          if curl -fsSL --retry 3 --max-time 150 "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-n8.1-latest-linux64-gpl-8.1.tar.xz" | tar -xJ -C "$d" --strip-components=1; then
+            echo "$d/bin" >> "$GITHUB_PATH"
+            "$d/bin/ffmpeg" -hide_banner -version | head -1
+          else
+            sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq --no-install-recommends -o DPkg::Lock::Timeout=60 ffmpeg
+          fi
       - name: Recos (Serializd, Letterboxd, Top 10 Netflix, TMDB, YouTube, jeux)
         run: node tools/recos.mjs dist/site/data/recos.json
         env:

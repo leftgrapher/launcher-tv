@@ -54,12 +54,11 @@ function encode(src, jpg, mp4) {
  */
 export async function prepare4k(items, { siteDir, outDir, cacheDir, log = console.log, budgetMs = 6 * 60 * 1000 }) {
   const todo = items.filter((it) => it.uhd);
-  const done = { ok: 0, cached: 0, failed: 0 };
-  if (!todo.length || !hasFfmpeg()) {
-    if (todo.length) log("Fonds 4K : ffmpeg absent, ignorés.");
-    items.forEach((it) => delete it.uhd);
-    return done;
-  }
+  const done = { ok: 0, cached: 0, failed: 0, waiting: 0 };
+  if (!todo.length) return done;
+  // Sans ffmpeg, les fonds déjà prêts (cache) servent quand même ; les nouveaux attendent le prochain passage.
+  const ff = hasFfmpeg();
+  if (!ff) log("Fonds 4K : ffmpeg absent, seuls les fonds déjà prêts sont utilisés.");
   fs.mkdirSync(outDir, { recursive: true });
   fs.mkdirSync(cacheDir, { recursive: true });
   const t0 = Date.now();
@@ -72,6 +71,9 @@ export async function prepare4k(items, { siteDir, outDir, cacheDir, log = consol
     try {
       if (fs.existsSync(cj) && fs.existsSync(cm)) {
         done.cached++;
+      } else if (!ff) {
+        done.waiting++;
+        continue;
       } else {
         if (Date.now() - t0 > budgetMs) throw new Error("temps écoulé, au prochain passage");
         const src = path.join(cacheDir, key + ".src");
@@ -99,6 +101,6 @@ export async function prepare4k(items, { siteDir, outDir, cacheDir, log = consol
     const p = path.join(cacheDir, f);
     if (!keep.has(key) && fs.statSync(p).mtimeMs < week) fs.rmSync(p, { force: true });
   }
-  log("Fonds 4K : " + done.ok + " préparés, " + done.cached + " déjà prêts" + (done.failed ? ", " + done.failed + " en échec" : "") + ".");
+  log("Fonds 4K : " + done.ok + " préparés, " + done.cached + " déjà prêts" + (done.waiting ? ", " + done.waiting + " au prochain passage" : "") + (done.failed ? ", " + done.failed + " en échec" : "") + ".");
   return done;
 }
