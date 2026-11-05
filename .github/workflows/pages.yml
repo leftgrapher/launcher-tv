@@ -34,7 +34,12 @@ jobs:
           key: recos-${{ github.run_id }}
           restore-keys: recos-
       - name: ffmpeg (fonds 4K des recos)
-        run: command -v ffmpeg || (sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg)
+        # Sans ffmpeg, les recos sont faites quand même (sans fonds 4K) : cette étape ne doit jamais bloquer la mise à jour.
+        timeout-minutes: 4
+        continue-on-error: true
+        env:
+          DEBIAN_FRONTEND: noninteractive
+        run: command -v ffmpeg || (sudo apt-get update -qq -o Acquire::Retries=2 && sudo apt-get install -y -qq --no-install-recommends -o DPkg::Lock::Timeout=60 ffmpeg)
       - name: Recos (Serializd, Letterboxd, Top 10 Netflix, TMDB, YouTube, jeux)
         run: node tools/recos.mjs dist/site/data/recos.json
         env:
