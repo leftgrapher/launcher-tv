@@ -469,7 +469,9 @@ async function main() {
   fs.writeFileSync(OUT, JSON.stringify(out, null, 1));
   fs.mkdirSync(path.dirname(CACHE), { recursive: true });
   fs.writeFileSync(CACHE, JSON.stringify(cache));
-  log("Recos :", items.length, "→", path.relative(root, OUT));
+  const kinds = items.reduce((m, it) => { m[it.kind] = (m[it.kind] || 0) + 1; return m; }, {});
+  log("Recos :", items.length, "→", path.relative(root, OUT), "·", Object.keys(kinds).map((k) => kinds[k] + " " + k).join(", "));
+  items.filter((it) => it.kind === "game" || it.kind === "video").forEach((it) => log("  " + it.kind + " : " + it.title + " — " + it.reason + (it.bg4k ? " (fond 4K)" : "")));
   items.slice(0, 6).forEach((it, i) => log("  " + (i + 1) + ". " + it.title + " — " + it.reason + " · " + it.platform + " (" + it.score + ")"));
 }
 
