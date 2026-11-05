@@ -4,12 +4,13 @@
 import { h, render, Component } from "preact";
 import htm from "htm";
 import boardsCss from "./boards/boards.css";
-import { cssAssets } from "./assets.js";
+import { A, cssAssets } from "./assets.js";
 import { makeBoards } from "./tv-boards.js";
 import { onTV, log, note, diagnostics } from "./tv.js";
 import { cachedRecos, fetchRecos, heroItems } from "./recos.js";
 import { videoState } from "./video.js";
 import { cachedMeteo, fetchMeteo } from "./meteo.js";
+import * as ST from "./smartthings.js";
 
 const html = htm.bind(h);
 const { Main, Hub, mainDefaults, hubDefaults } = makeBoards(html);
@@ -37,6 +38,22 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#05070E}
 .board-main.hub-on [data-launcher]::after{opacity:1;transition-duration:300ms}
 .board-hub.out{animation:hubOut 260ms cubic-bezier(.4,0,.2,1) forwards;pointer-events:none}
 @keyframes hubOut{to{opacity:0;transform:translateX(96px)}}
+.st-setup{position:absolute;inset:0;z-index:40;display:flex;align-items:center;justify-content:center;background:rgba(5,7,14,.8);
+  font-family:Inter,system-ui,sans-serif;color:#F5F5F7}
+.st-card{width:1180px;box-sizing:border-box;padding:56px 64px;border-radius:40px;background:rgba(22,24,31,.94);border:1px solid rgba(255,255,255,.12);
+  box-shadow:0 40px 120px rgba(0,0,0,.5)}
+.st-card h2{margin:0 0 8px;font-size:44px;font-weight:600;letter-spacing:-.01em}
+.st-card p{margin:0;font-size:24px;line-height:1.45;color:#A3A6B2}
+.st-row{display:flex;gap:48px;align-items:center;margin:36px 0 32px}
+.st-qr{width:260px;height:260px;flex:none;border-radius:24px;background:#fff;padding:14px;box-sizing:border-box}
+.st-steps{margin:0;padding-left:34px;font-size:25px;line-height:1.45;color:#D5D7E0}
+.st-steps li{margin:0 0 14px}
+.st-steps b{color:#F5F5F7}
+.st-input{width:100%;box-sizing:border-box;height:76px;padding:0 26px;border-radius:22px;border:2px solid rgba(255,255,255,.18);background:rgba(0,0,0,.35);
+  color:#F5F5F7;font:500 24px/1 ui-monospace,Menlo,monospace;outline:none}
+.st-input:focus{border-color:#F5F5F7;box-shadow:0 0 0 6px rgba(255,255,255,.12)}
+.st-msg{min-height:34px;margin-top:18px;font-size:23px;color:#A3A6B2}
+.st-msg.err{color:#FF8A80}.st-msg.ok{color:#7DDCA0}
 .launcher-toast{position:absolute;left:50%;top:56px;z-index:50;transform:translate(-50%,-16px);opacity:0;padding:16px 28px;border-radius:999px;
   background:rgba(22,24,31,.86);backdrop-filter:blur(30px);-webkit-backdrop-filter:blur(30px);color:#F5F5F7;font:500 22px/1.2 Inter,system-ui,sans-serif;
   box-shadow:0 12px 40px rgba(0,0,0,.35);transition:opacity 260ms ease,transform 360ms cubic-bezier(.34,1.4,.5,1);pointer-events:none;white-space:nowrap}
@@ -174,8 +191,14 @@ class App extends Component {
     document.addEventListener("click", this._onClick, true);
     this._onToast = (e) => this.toast(e.detail);
     window.addEventListener("launcher:toast", this._onToast);
+    // SmartThings : panneau de connexion demandé par un bouton du hub ; connexion entretenue toutes les 6 heures.
+    window.addEventListener("launcher:smartthings", () => this.openSt());
+    ST.keepAlive();
+    setInterval(() => ST.keepAlive(), 6 * 3600 * 1000);
+    window.addEventListener("keydown", (e) => this.stKey(e), true);
     // Journal de diagnostic (lancement des applis, entrées HDMI) : touche « i » au clavier, ou Info sur la télécommande.
     this._onKey = (e) => {
+      if (this.state.stSetup) return;
       // « i » au clavier, Info (457) ou Lecture/Pause (10252) sur la télécommande Solar de la S95F, qui n’a pas de touche Info.
       if (e.key === "i" || e.keyCode === 457 || e.keyCode === 10252 || e.key === "MediaPlayPause") {
         const on = !this.state.log;
@@ -226,6 +249,53 @@ class App extends Component {
     this._hubT = setTimeout(() => this.setState({ hub: null }), onTV ? 230 : 270);
   }
 
+  // Panneau « Connecter SmartThings » : QR code vers la page du téléphone, champ où coller le code de connexion.
+  openSt() {
+    if (this.state.stSetup) return;
+    this._stPrev = window.__dcRemote;
+    window.__dcRemote = "setup";
+    this.setState({ stSetup: true, stBusy: false, stMsg: ST.connected() ? "Déjà connecté : un nouveau code remplacera la connexion actuelle." : "", stErr: false });
+    setTimeout(() => { if (this._stInput) this._stInput.focus(); }, 80);
+  }
+
+  closeSt() {
+    if (this._stInput) this._stInput.blur();
+    window.__dcRemote = this._stPrev || "main";
+    this.setState({ stSetup: false, stBusy: false });
+  }
+
+  submitSt() {
+    const v = this._stInput ? this._stInput.value : "";
+    if (!v.trim()) { this.setState({ stMsg: "Colle d’abord le code de connexion (il commence par ST1:).", stErr: true }); return; }
+    if (this.state.stBusy) return;
+    this.setState({ stBusy: true, stMsg: "Connexion à SmartThings…", stErr: false });
+    ST.connect(v).then(() => {
+      this.setState({ stBusy: false, stMsg: "Connecté. Les boutons du hub lancent maintenant tes routines.", stErr: false, stOk: true });
+      if (this._stInput) this._stInput.value = "";
+      setTimeout(() => { if (this.state.stSetup) this.closeSt(); this.setState({ stOk: false }); }, 1600);
+    }, (e) => this.setState({ stBusy: false, stMsg: "Échec : " + e.message, stErr: true }));
+  }
+
+  // Touches pendant le panneau : Retour ferme, OK (ou « Terminé » du clavier de la TV) valide le code collé.
+  stKey(e) {
+    if (!this.state.stSetup) return;
+    const k = e.keyCode;
+    const inInput = document.activeElement === this._stInput;
+    if (k === 10009 || e.key === "Escape" || e.key === "GoBack") {
+      e.preventDefault(); e.stopPropagation();
+      this.closeSt();
+      return;
+    }
+    if (k === 13 || k === 65376) {
+      e.stopPropagation();
+      if (inInput && this._stInput.value.trim()) { e.preventDefault(); this.submitSt(); }
+      else if (!inInput && this._stInput) { e.preventDefault(); this._stInput.focus(); }
+      return;
+    }
+    if (!inInput && (k === 37 || k === 38 || k === 39 || k === 40) && this._stInput) { e.preventDefault(); this._stInput.focus(); }
+    e.stopPropagation();
+  }
+
   logText(s) {
     const d = s.diag || {};
     const lines = [
@@ -239,6 +309,7 @@ class App extends Component {
       "",
       "Recos : " + (s.recosData ? s.recosData.items.length + " titres, mises à jour le " + new Date(s.recosData.generatedAt).toLocaleString("fr-FR") : "exemples (pas encore de recos en ligne)"),
       (s.recosData && s.recosData.credits) || "Données et images : TMDB (ce produit utilise l’API TMDB mais n’est ni approuvé ni certifié par TMDB). Disponibilités : JustWatch.",
+      "SmartThings : " + ST.status(),
       "Météo : Weather data by Open-Meteo.com (CC BY 4.0)" + (s.meteo ? " · " + Math.round(s.meteo.temp) + "°, code " + s.meteo.code + ", relevée à " + new Date(s.meteo.at).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }) : "")
     ];
     if (d.names && d.names.length) lines.splice(4, 0, "Applis : " + d.names.slice(0, 18).join(" · "));
@@ -258,6 +329,22 @@ class App extends Component {
       ${onTV
         ? (s.hubReady ? html`<div class=${"board board-hub" + (s.hub === "in" ? " in" : s.hub === "out" ? " out" : " off")}><${Hub} ref=${(r) => (this._hub = r)} premount=${true} ...${hubProps} /></div>` : null)
         : s.hub ? html`<div class=${"board board-hub" + (s.hub === "out" ? " out" : "")}><${Hub} key=${s.hubKey} ...${hubProps} /></div>` : null}
+ ${s.stSetup ? html`<div class="st-setup" role="dialog" aria-label="Connecter SmartThings">
+        <div class="st-card">
+          <h2>Connecter SmartThings</h2>
+          <p>Pour que Hue Sync, les modes vidéo et gaming et « Toute la pièce » lancent tes routines SmartThings.</p>
+          <div class="st-row">
+            <img class="st-qr" src=${A("smartthings-qr.svg")} alt="QR code vers la page de connexion" />
+            <ol class="st-steps">
+              <li>Scanne ce QR code avec ton téléphone (ou ouvre <b>leftgrapher.github.io/launcher-tv/smartthings.html</b>).</li>
+              <li>Suis les étapes : à la fin, la page te donne un <b>code de connexion</b>. Copie-le.</li>
+              <li>Sélectionne le champ ci-dessous et colle le code avec le clavier du téléphone (notification de l’appli SmartThings), puis OK.</li>
+            </ol>
+          </div>
+          <input class="st-input" ref=${(r) => (this._stInput = r)} type="text" autocomplete="off" spellcheck="false" placeholder="Code de connexion (ST1:…)" />
+          <div class=${"st-msg" + (s.stErr ? " err" : s.stOk ? " ok" : "")}>${s.stMsg || "Retour : fermer"}</div>
+        </div>
+      </div>` : null}
       ${s.toast ? html`<div class=${"launcher-toast" + (s.toast.on ? " on" : "")} role="status">${s.toast.text}</div>` : null}
       ${s.log ? html`<div class="launcher-log">${this.logText(s)}</div>` : null}
     `;

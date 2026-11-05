@@ -41,6 +41,8 @@ const copyDir = (from, to) => {
 
 // En ligne : code + fichiers publics uniquement.
 const pub = copyDir(path.join(root, "public/assets"), out("site/assets"));
+// Pages annexes du site (connexion SmartThings depuis le téléphone).
+copyDir(path.join(root, "public"), out("site"));
 fs.writeFileSync(out("site/version.json"), JSON.stringify({ v: BUILD }) + "\n");
 const page = `<!DOCTYPE html>
 <html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=1920, initial-scale=1">

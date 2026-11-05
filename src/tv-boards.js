@@ -8,6 +8,7 @@ import { onTV, launchApp, launchYoutubeVideo, launchYoutubeOfficial, showSource,
 import { openFx, rectIn } from "./launch-fx.js";
 import * as video from "./video.js";
 import { playFast, warmSounds } from "./sounds.js";
+import * as ST from "./smartthings.js";
 
 function boardBase(mod, html) {
   return class DCLogic extends Component {
@@ -21,6 +22,8 @@ const remote = () => (typeof window !== "undefined" ? window.__dcRemote : undefi
 const toast = (text) => window.dispatchEvent(new CustomEvent("launcher:toast", { detail: text }));
 
 const SAVED = "launcher.home";
+// État des boutons SmartThings du hub (Hue Sync, mode, toute la pièce), retrouvé au démarrage.
+const HUB_SAVED = "launcher.hubState";
 
 export function makeBoards(html) {
   const MainLogic = MainBoard.makeLogic(boardBase(MainBoard, html));
@@ -321,8 +324,52 @@ export function makeBoards(html) {
       });
     }
 
+    // Boutons reliés à SmartThings : chaque changement lance la routine choisie pour ce bouton (page smartthings.html).
+    // Pas encore connecté : le panneau de connexion s’ouvre. Échec : le bouton revient à son état d’avant.
+    _set(patch) {
+      const s = this.state || {};
+      const act = !patch || !onTV ? null
+        : "hueOn" in patch && patch.hueOn !== (s.hueOn ?? true) ? (patch.hueOn ? "hueOn" : "hueOff")
+        : "mode" in patch ? (patch.mode === "jeu" ? "jeu" : "video")
+        : "zoneRoom" in patch && patch.zoneRoom !== !!s.zoneRoom ? (patch.zoneRoom ? "pieceOn" : "pieceOff")
+        : null;
+      if (!act) return super._set(patch);
+      if (!ST.connected()) {
+        if (patch.focus) super._set({ focus: patch.focus });
+        window.dispatchEvent(new CustomEvent("launcher:smartthings"));
+        return;
+      }
+      const before = { hueOn: s.hueOn ?? true, mode: s.mode || "video", zoneRoom: !!s.zoneRoom };
+      super._set(patch);
+      this._saveHub(patch);
+      ST.run(act).then((r) => {
+        if (r.ok) return;
+        // Aucune routine choisie pour ce bouton : il ne change pas d’état pour rien.
+        this._toast(r.why);
+        this.setState(before);
+        this._saveHub(before);
+      }, (e) => {
+        note(e.message);
+        if (e.lost) window.dispatchEvent(new CustomEvent("launcher:smartthings"));
+        else this._toast("SmartThings n’a pas répondu");
+        this.setState(before);
+        this._saveHub(before);
+      });
+    }
+
+    _saveHub(patch) {
+      const cur = store.load(HUB_SAVED, {});
+      ["hueOn", "mode", "zoneRoom"].forEach((k) => { if (k in patch) cur[k] = patch[k]; });
+      store.save(HUB_SAVED, cur);
+    }
+
     componentDidMount() {
       super.componentDidMount();
+      const saved = store.load(HUB_SAVED, null);
+      if (saved) {
+        this._mute = true;
+        this.setState(saved, () => { if (this._sndState) this._sndPrev = this._sndState(); this._mute = false; });
+      }
       // Préparé d’avance sur la TV : il ne prend la télécommande qu’à son ouverture (App.openHub).
       if (typeof window !== "undefined" && !this.props.premount) window.__dcRemote = "hub";
       this._onVis = () => {

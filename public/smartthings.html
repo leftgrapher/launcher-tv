@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<meta name="robots" content="noindex">
+<title>Launcher TV · SmartThings</title>
+<style>
+:root{--bg:#05070E;--card:#11141D;--line:rgba(255,255,255,.12);--txt:#F5F5F7;--txt2:#A3A6B2;--accent:#F2B66D;--err:#FF8A80;--ok:#7DDCA0}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--txt);font:16px/1.5 -apple-system,BlinkMacSystemFont,"Inter",system-ui,sans-serif}
+main{max-width:560px;margin:0 auto;padding:28px 16px 48px}
+h1{font-size:24px;line-height:1.2;margin:0 0 6px}
+p{margin:0 0 14px;color:var(--txt2)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:20px;margin:18px 0}
+.card h2{font-size:17px;margin:0 0 10px}
+label{display:block;font-size:14px;color:var(--txt2);margin:14px 0 6px}
+input,select,textarea{width:100%;font:inherit;color:var(--txt);background:#0B0D14;border:1px solid var(--line);border-radius:12px;padding:12px}
+textarea{font:13px/1.4 ui-monospace,Menlo,monospace;min-height:120px;word-break:break-all;resize:vertical}
+button{width:100%;margin-top:18px;font:600 16px/1 inherit;font-family:inherit;color:#0B0C0F;background:var(--txt);border:0;border-radius:999px;padding:15px}
+button.sec{background:transparent;color:var(--txt);border:1px solid var(--line)}
+code.nw{white-space:nowrap;word-break:normal}
+code{font:13px ui-monospace,Menlo,monospace;background:#0B0D14;border:1px solid var(--line);border-radius:8px;padding:2px 6px;word-break:break-all}
+ol{padding-left:20px;margin:0;color:var(--txt2)}
+li{margin:6px 0}
+.msg{margin-top:12px;font-size:14px}
+.err{color:var(--err)}.ok{color:var(--ok)}
+.hidden{display:none}
+small{color:var(--txt2)}
+</style>
+</head>
+<body>
+<main>
+  <h1>Connecter SmartThings au launcher</h1>
+  <p>Pour que les boutons du hub (Hue Sync, mode vidéo, mode gaming, toute la pièce) lancent tes routines SmartThings.</p>
+
+  <!-- Étape 1 : identifiants de l’appli SmartThings -->
+  <section id="e1" class="hidden">
+    <div class="card">
+      <h2>Avant de commencer</h2>
+      <ol>
+        <li>Crée une appli « API Access » sur <a href="https://developer.smartthings.com/console" style="color:var(--accent)">developer.smartthings.com/console</a> (Service Integrations).</li>
+        <li>URL de redirection : <code id="redir"></code></li>
+        <li>Autorisations : <code class="nw">r:scenes:*</code> et <code class="nw">x:scenes:*</code>.</li>
+      </ol>
+    </div>
+    <form id="f1" class="card" autocomplete="off">
+      <h2>1. Identifiants de l’appli</h2>
+      <label for="ci">Client ID</label>
+      <input id="ci" required spellcheck="false" autocapitalize="off" autocorrect="off">
+      <label for="cs">Client secret</label>
+      <input id="cs" type="password" required spellcheck="false" autocapitalize="off" autocorrect="off">
+      <button type="submit">Autoriser avec SmartThings</button>
+      <div id="m1" class="msg"></div>
+      <small>Ils restent sur ce téléphone le temps de l’autorisation, puis dans le code à coller sur ta TV. Rien n’est envoyé ailleurs qu’à SmartThings.</small>
+    </form>
+  </section>
+
+  <!-- Étape 2 : une routine par bouton -->
+  <section id="e2" class="hidden">
+    <div class="card">
+      <h2>2. Une routine pour chaque bouton du hub</h2>
+      <p>Les routines « à lancer manuellement » de ton compte SmartThings. Laisse « Aucune » si un bouton n’en a pas.</p>
+      <div id="map"></div>
+      <button id="b2" type="button">Créer le code de connexion</button>
+    </div>
+  </section>
+
+  <!-- Étape 3 : code à coller sur la TV -->
+  <section id="e3" class="hidden">
+    <div class="card">
+      <h2>3. Code de connexion</h2>
+      <p>Sur la TV, dans le panneau « Connecter SmartThings », sélectionne le champ et colle ce code avec le clavier du téléphone (notification de l’appli SmartThings), puis valide.</p>
+      <textarea id="code" readonly></textarea>
+      <button id="b3" type="button">Copier le code</button>
+      <div id="m3" class="msg"></div>
+      <small>Ce code donne accès à tes routines : ne le partage pas. Il ne sert qu’une fois ; pour reconnecter la TV, refais ces étapes.</small>
+    </div>
+  </section>
+
+  <section id="eErr" class="hidden">
+    <div class="card"><h2>Ça n’a pas marché</h2><p id="mErr" class="err"></p><button id="bErr" type="button" class="sec">Recommencer</button></div>
+  </section>
+</main>
+<script>
+(function () {
+  "use strict";
+  var API = "https://api.smartthings.com/v1";
+  var REDIRECT = location.origin + location.pathname;
+  var KEY = "launcher.smartthings.setup";
+  var $ = function (id) { return document.getElementById(id); };
+  var show = function (id) { ["e1", "e2", "e3", "eErr"].forEach(function (s) { $(s).classList.toggle("hidden", s !== id); }); };
+  var fail = function (msg) { $("mErr").textContent = msg; show("eErr"); };
+  $("redir").textContent = REDIRECT;
+  $("bErr").onclick = function () { sessionStorage.removeItem(KEY); location.href = REDIRECT; };
+
+  // Boutons du hub et mots qui permettent de deviner la routine de chacun (modifiable ensuite).
+  var OFF = /off|d[eé]sactiv|[eé]tei|stop|coup|arr[eê]t/i, HUE = /hue|sync|ambi/i, ROOM = /pi[eè]ce|room|salon/i, ALONE = /tv seule|tv uniquement/i;
+  var ACTIONS = [
+    { k: "video", name: "Mode vidéo", guess: function (n) { return /vid[eé]o|film|cin[eé]|s[eé]rie/i.test(n); } },
+    { k: "jeu", name: "Mode gaming", guess: function (n) { return /jeu|gam/i.test(n); } },
+    { k: "hueOn", name: "Hue Sync : activer", guess: function (n) { return HUE.test(n) && !OFF.test(n); } },
+    { k: "hueOff", name: "Hue Sync : désactiver", guess: function (n) { return HUE.test(n) && OFF.test(n); } },
+    { k: "pieceOn", name: "Toute la pièce : activer", guess: function (n) { return ROOM.test(n) && !OFF.test(n) && !ALONE.test(n); } },
+    { k: "pieceOff", name: "Toute la pièce : désactiver (TV seule)", guess: function (n) { return ALONE.test(n) || (ROOM.test(n) && OFF.test(n)); } }
+  ];
+
+  function b64url(obj) {
+    var bytes = new TextEncoder().encode(JSON.stringify(obj)), bin = "";
+    for (var i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+    return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  }
+
+  function randomState() {
+    var a = new Uint8Array(16);
+    crypto.getRandomValues(a);
+    return Array.prototype.map.call(a, function (b) { return ("0" + b.toString(16)).slice(-2); }).join("");
+  }
+
+  // Étape 1 : vers la page d’autorisation de SmartThings.
+  function step1() {
+    show("e1");
+    $("f1").onsubmit = function (e) {
+      e.preventDefault();
+      var ci = $("ci").value.trim(), cs = $("cs").value.trim();
+      if (!ci || !cs) { $("m1").textContent = "Les deux champs sont nécessaires."; $("m1").className = "msg err"; return; }
+      var state = randomState();
+      sessionStorage.setItem(KEY, JSON.stringify({ ci: ci, cs: cs, state: state }));
+      location.href = API + "/oauth/authorize?" + new URLSearchParams({
+        client_id: ci, response_type: "code", redirect_uri: REDIRECT, scope: "r:scenes:* x:scenes:*", state: state
+      }).toString();
+    };
+  }
+
+  // Étape 2 : SmartThings revient ici avec un code ; on l’échange, puis on liste les routines.
+  function step2(q) {
+    var saved = null;
+    try { saved = JSON.parse(sessionStorage.getItem(KEY) || "null"); } catch (e) {}
+    history.replaceState(null, "", REDIRECT);
+    if (!saved || saved.state !== q.get("state")) return fail("Session expirée ou ouverte sur un autre navigateur. Recommence depuis le début, sur ce téléphone.");
+    sessionStorage.removeItem(KEY);
+    fetch(API + "/oauth/token", {
+      method: "POST",
+      headers: { Authorization: "Basic " + btoa(saved.ci + ":" + saved.cs), "Content-Type": "application/x-www-form-urlencoded", Accept: "application/json" },
+      body: new URLSearchParams({ grant_type: "authorization_code", code: q.get("code"), client_id: saved.ci, redirect_uri: REDIRECT }).toString()
+    }).then(function (r) {
+      return r.json().catch(function () { return {}; }).then(function (j) {
+        if (!r.ok || !j.access_token || !j.refresh_token) throw new Error("SmartThings a refusé l’autorisation (" + r.status + (j.error ? " : " + j.error : "") + "). Vérifie le Client ID, le secret et l’URL de redirection.");
+        return j;
+      });
+    }).then(function (tok) {
+      return listScenes(tok.access_token).then(function (scenes) { mapping(saved, tok.refresh_token, scenes); });
+    }).catch(function (e) { fail(e.message || String(e)); });
+  }
+
+  function listScenes(at) {
+    var out = [];
+    function page(url) {
+      return fetch(url, { headers: { Authorization: "Bearer " + at, Accept: "application/json" } }).then(function (r) {
+        if (!r.ok) throw new Error("Impossible de lire tes routines (" + r.status + "). Vérifie l’autorisation r:scenes:*.");
+        return r.json();
+      }).then(function (j) {
+        (j.items || []).forEach(function (s) { out.push({ id: s.sceneId, name: s.sceneName || "Sans nom" }); });
+        return j._links && j._links.next && j._links.next.href ? page(j._links.next.href) : out;
+      });
+    }
+    return page(API + "/scenes?max=200");
+  }
+
+  function mapping(saved, rt, scenes) {
+    show("e2");
+    var box = $("map");
+    box.innerHTML = "";
+    if (!scenes.length) box.innerHTML = '<p class="err">Aucune routine à lancer manuellement trouvée dans ton compte. Crée-les dans l’appli SmartThings, puis recommence.</p>';
+    var taken = {};
+    ACTIONS.forEach(function (a) {
+      var lab = document.createElement("label");
+      lab.textContent = a.name;
+      lab.htmlFor = "s-" + a.k;
+      var sel = document.createElement("select");
+      sel.id = "s-" + a.k;
+      sel.add(new Option("Aucune", ""));
+      scenes.forEach(function (s) { sel.add(new Option(s.name, s.id)); });
+      var g = scenes.filter(function (s) { return a.guess(s.name) && !taken[s.id]; })[0];
+      if (g) { sel.value = g.id; taken[g.id] = true; }
+      box.appendChild(lab);
+      box.appendChild(sel);
+    });
+    $("b2").onclick = function () {
+      var sc = {};
+      ACTIONS.forEach(function (a) { var v = $("s-" + a.k).value; if (v) sc[a.k] = v; });
+      $("code").value = "ST1:" + b64url({ v: 1, ci: saved.ci, cs: saved.cs, rt: rt, sc: sc });
+      show("e3");
+    };
+  }
+
+  $("b3").onclick = function () {
+    var t = $("code");
+    var done = function () { $("m3").textContent = "Copié. Colle-le maintenant sur la TV (il est à usage unique)."; $("m3").className = "msg ok"; };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t.value).then(done, function () { t.select(); document.execCommand("copy"); done(); });
+    else { t.select(); document.execCommand("copy"); done(); }
+  };
+
+  var q = new URLSearchParams(location.search);
+  if (q.get("error")) { history.replaceState(null, "", REDIRECT); fail("Autorisation annulée sur SmartThings (" + q.get("error") + ")."); }
+  else if (q.get("code")) step2(q);
+  else step1();
+})();
+</script>
+</body>
+</html>

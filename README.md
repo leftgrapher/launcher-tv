@@ -90,7 +90,7 @@ Sans clé TMDB, l’accueil garde ses exemples. Attention : `recos.json` est en 
 | Élément | Sur la TV |
 |---|---|
 | Tuiles d’applis | Ouvrent la vraie appli (identifiants connus, sinon recherche par nom parmi les applis installées), lancée dès l’appui ; la tuile pulse jusqu’à ce que l’appli s’affiche. Si elle n’est pas trouvée : message, et retour à l’accueil. |
-| Recos | Une vidéo YouTube s’ouvre directement dans TizenTube. Les autres (Netflix, Disney+, HBO Max, Apple TV…) ouvrent l’appli sur son accueil : sur les TV récentes, elles ignorent les demandes d’ouvrir un titre précis. |
+| Recos | Une vidéo YouTube s’ouvre dans l’appli YouTube officielle (`recos.youtube.openIn: "youtubeapp"`) ou dans TizenTube (sans ce réglage). Les autres (Netflix, Disney+, HBO Max, Apple TV…) ouvrent l’appli sur son accueil : sur les TV récentes, elles ignorent les demandes d’ouvrir un titre précis. |
 | YouTube | Ouvre TizenBrew (régler TizenBrew pour lancer TizenTube automatiquement). « YouTube, appli officielle » ouvre l’appli Samsung. |
 | PS5, Switch, Mac, PC | Basculent sur HDMI 1, 2, 3, 4 : l’image en direct apparaît sous la tuile qui grandit, puis l’écran TV de Samsung prend le relais. Si la TV refuse, le menu Sources s’ouvre. |
 | Aperçu d’une source | Tuile PS5 ou Switch du dock sélectionnée quelques secondes : son image en direct remplit la tuile, dans son cadre (la TV bascule sur cette entrée, son compris). Pas d’aperçu pour les applis (Tizen ne donne pas l’image d’une autre appli). |
@@ -103,9 +103,21 @@ Sans clé TMDB, l’accueil garde ses exemples. Attention : `recos.json` est en 
 | Ordre des applis (mode modifier) | Gardé d’un allumage à l’autre. |
 | Écran de veille | Désactivé sur la TV (il reste dans la maquette). |
 | Météo | Paris, à côté de l’heure : Open-Meteo (gratuit, sans clé), lu par la TV toutes les 15 min. Crédit dans le panneau Info. |
-| Hub | Préparé au démarrage : l’ouvrir ou le fermer le fait seulement glisser. |
+| Hub | Préparé au démarrage : seuls ses boutons glissent depuis le côté ; météo, heure et bouton du hub restent en place. |
+| Hub > Hue Sync, modes vidéo et gaming, Toute la pièce | Lancent tes routines SmartThings (voir ci-dessous). État des boutons gardé d’un allumage à l’autre. |
 
-Encore simulé (prévu plus tard) : Hue Sync et l’éclairage, Wi-Fi et Bluetooth, modes vidéo/jeu, « Tout éteindre », recos de jeux, météo, ouverture directe d’une série dans son appli.
+Encore simulé (prévu plus tard) : Wi-Fi et Bluetooth, « Tout éteindre », ouverture directe d’une série dans son appli.
+
+### Boutons du hub reliés à SmartThings
+
+Hue Sync (activer / désactiver), Mode vidéo, Mode gaming et Toute la pièce (activer / TV seule) lancent chacun une routine SmartThings « à lancer manuellement ».
+
+1. Sur developer.smartthings.com/console > *Service Integrations* : créer une appli *API Access*, URL de redirection `https://leftgrapher.github.io/launcher-tv/smartthings.html`, autorisations `r:scenes:*` et `x:scenes:*`. Noter le *Client ID* et le *Client secret*.
+2. Sur la TV, appuyer sur l’un de ces boutons du hub : le panneau « Connecter SmartThings » s’ouvre avec un QR code vers `smartthings.html` (page du site, à ouvrir sur le téléphone).
+3. Sur le téléphone : Client ID et secret, autorisation SmartThings, une routine par bouton, puis « Copier le code ».
+4. Sur la TV : coller le code dans le champ (clavier du téléphone via l’appli SmartThings), OK.
+
+Les identifiants et le jeton restent sur la TV (jamais en ligne) ; le jeton d’accès est renouvelé tout seul (`src/smartthings.js`). Si la connexion est perdue (TV éteinte plus d’un mois, appli supprimée), le panneau se rouvre : refaire les étapes 3 et 4.
 
 ## Dépannage
 
