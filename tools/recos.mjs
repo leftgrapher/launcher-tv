@@ -205,6 +205,7 @@ async function youtube() {
         const u = new URL("https://www.googleapis.com/youtube/v3/subscriptions");
         u.search = new URLSearchParams({ part: "snippet", channelId: YT.channelId, maxResults: "50", order: "relevance", key: YT_KEY, ...(pageToken ? { pageToken } : {}) });
         const j = await (await get(u)).json();
+        if (n === 0) log("YouTube : abonnements de la chaîne " + YT.channelId + " : " + (j.pageInfo && j.pageInfo.totalResults != null ? j.pageInfo.totalResults : (j.items || []).length) + " visibles.");
         (j.items || []).forEach((it) => { const id = it.snippet && it.snippet.resourceId && it.snippet.resourceId.channelId; if (id && channels.indexOf(id) < 0) channels.push(id); });
         if (!j.nextPageToken) break;
         pageToken = j.nextPageToken;
@@ -215,7 +216,10 @@ async function youtube() {
       channels = cache.ytChannels || channels;
     }
   }
-  if (!channels.length) return [];
+  if (!channels.length) {
+    log("YouTube : aucune chaîne à suivre" + (YT_KEY ? " (abonnements privés ? Sur YouTube : Paramètres > Confidentialité > décocher « Garder tous mes abonnements privés »)." : " (pas de clé YOUTUBE_KEY)."));
+    return [];
+  }
   const since = Date.now() - (YT.days || 10) * 86400000;
   const feeds = await pool(channels.slice(0, YT.channelsMax || 40), 6, async (id) => L.ytFeed(await (await get("https://www.youtube.com/feeds/videos.xml?channel_id=" + id)).text()));
   const vids = [];
@@ -257,7 +261,10 @@ async function igdb(token, endpoint, body) {
 }
 
 async function games() {
-  if (!IGDB_ID || !IGDB_SECRET) return [];
+  if (!IGDB_ID || !IGDB_SECRET) {
+    if (IGDB_ID || IGDB_SECRET) log("Jeux : secret GitHub " + (IGDB_ID ? "IGDB_CLIENT_SECRET" : "IGDB_CLIENT_ID") + " absent ou vide.");
+    return [];
+  }
   let token;
   try {
     // Identifiants dans le corps de la requête (jamais dans l’adresse, qui peut apparaître dans le journal en cas d’erreur).
