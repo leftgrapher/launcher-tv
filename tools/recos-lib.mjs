@@ -117,27 +117,47 @@ export function ytFeed(xml) {
   return out;
 }
 
-// ── Jeux (RAWG) ──
+// ── Jeux (IGDB) ──
 
-export function rawgImage(url, width) {
-  return url ? url.replace("/media/games/", "/media/resize/" + width + "/-/games/").replace("/media/screenshots/", "/media/resize/" + width + "/-/screenshots/") : null;
+export const igdbImage = (id, size) => "https://images.igdb.com/igdb/image/upload/t_" + size + "/" + id + ".jpg";
+
+// Fond d’un jeu : son illustration officielle la plus grande au format paysage, sinon sa plus grande capture d’écran.
+// uhd : l’original quand il fait au moins 3840 px de large (pour le fond 4K de la TV).
+export function igdbBackdrop(g) {
+  const wide = (a) => a && a.image_id && a.width >= 1280 && a.height > 0 && a.width / a.height >= 1.5 && a.width / a.height <= 2.1;
+  const best = (list) => (list || []).filter(wide).sort((a, b) => b.width - a.width)[0];
+  const im = best(g.artworks) || best(g.screenshots);
+  if (!im) return null;
+  return {
+    backdrop: igdbImage(im.image_id, "1080p"),
+    thumb: igdbImage(im.image_id, "screenshot_big"),
+    uhd: im.width >= 3840 ? igdbImage(im.image_id, "original") : null
+  };
 }
 
-export function rawgGames(json) {
-  return ((json && json.results) || []).filter((g) => g && g.background_image).map((g) => {
-    const plats = (g.platforms || []).map((p) => p.platform && p.platform.id);
-    return {
+/**
+ * Jeux IGDB → candidats triés, du plus « du moment » au moins.
+ * pop : popularité IGDB par jeu (0 à ~2 : listes « en train d’y jouer » et « envie d’y jouer ») ;
+ * ps / ns : identifiants IGDB des plateformes PS5 et Switch. Les jeux mal notés (moins de 65/100) sont écartés.
+ */
+export function igdbGames(list, { pop = {}, ps = [], ns = [] } = {}) {
+  const on = (g, ids) => (g.platforms || []).some((p) => ids.indexOf(typeof p === "object" ? p.id : p) >= 0);
+  return (list || []).map((g) => {
+    if (!g || !g.name) return null;
+    const img = igdbBackdrop(g);
+    if (!img) return null;
+    const rated = (g.total_rating_count || 0) >= 3;
+    if (rated && (g.total_rating || 0) < 65) return null;
+    return Object.assign({
       id: g.id,
       title: g.name,
-      released: g.released || null,
-      added: g.added || 0,
-      rating: g.rating || 0,
-      genres: (g.genres || []).map((x) => x.name),
-      ps5: plats.indexOf(187) >= 0,
-      switch: plats.indexOf(7) >= 0,
-      image: g.background_image
-    };
-  });
+      released: g.first_release_date ? new Date(g.first_release_date * 1000).toISOString().slice(0, 10) : null,
+      genres: (g.genres || []).map((x) => (typeof x === "object" ? x.id : x)),
+      ps5: on(g, ps),
+      switch: on(g, ns),
+      score: (pop[g.id] || 0) * 10 + Math.log10(1 + (g.hypes || 0)) * 2 + (rated ? (g.total_rating - 70) / 10 : 0)
+    }, img);
+  }).filter((g) => g && (g.ps5 || g.switch)).sort((a, b) => b.score - a.score);
 }
 
 // ── Plateformes (fournisseurs TMDB / JustWatch) → applis du launcher ──

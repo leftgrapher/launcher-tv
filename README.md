@@ -75,7 +75,11 @@ Il faut une clé TMDB (gratuite pour un usage perso) :
   2. L’identifiant de ta chaîne (il commence par `UC`) : youtube.com/account_advanced. Le mettre dans `launcher.config.json`, `recos.youtube.channelId`.
   3. Une clé gratuite : console.cloud.google.com, activer *YouTube Data API v3*, puis *Identifiants > Créer une clé API*. Secret GitHub `YOUTUBE_KEY`.
   En secours, sans clé : la liste de tes chaînes (export Google Takeout) dans `recos.youtube.channels`.
-- **Jeux** (2 RPG, 1 indé et 1 puzzle du moment sur PS5 ou Switch, avec leur image officielle) : clé gratuite sur rawg.io/apidocs, secret GitHub `RAWG_KEY`. Choisir une reco de jeu bascule sur la PS5 ou la Switch.
+- **Jeux** (2 RPG, 1 indé et 1 puzzle du moment sur PS5 ou Switch, avec leur illustration officielle, en 4K quand elle existe) : base IGDB de Twitch, gratuite.
+  1. Compte Twitch avec la double authentification activée.
+  2. dev.twitch.tv/console > *Applications* > *Register Your Application* : nom unique, URL de redirection `http://localhost`, catégorie *Application Integration*, type *Confidential*.
+  3. *Manage* : copier le *Client ID*, puis *New Secret*. Secrets GitHub `IGDB_CLIENT_ID` et `IGDB_CLIENT_SECRET`.
+  Choisir une reco de jeu bascule sur la PS5 ou la Switch.
 
 À l’accueil, les 8 premières recos mélangent séries en cours, ta liste, une vidéo, un jeu et des découvertes.
 

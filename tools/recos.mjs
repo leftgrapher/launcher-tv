@@ -4,7 +4,8 @@
 // le Top 10 officiel de Netflix en France, et TMDB pour les détails, les images, les bandes-annonces
 // et les plateformes où chaque titre est inclus dans l’abonnement (données JustWatch).
 // Il faut une clé TMDB dans la variable TMDB_TOKEN (jeton de lecture « eyJ… » ou clé d’API).
-// En option : YOUTUBE_KEY (nouvelles vidéos de tes abonnements) et RAWG_KEY (jeux RPG, indé et puzzle du moment).
+// En option : YOUTUBE_KEY (nouvelles vidéos de tes abonnements) et IGDB_CLIENT_ID + IGDB_CLIENT_SECRET (jeux RPG, indé
+// et puzzle du moment, via IGDB : identifiants d’une appli Twitch, gratuite).
 import fs from "node:fs";
 import path from "node:path";
 import * as L from "./recos-lib.mjs";
@@ -20,7 +21,8 @@ const LANG = cfg.language || "fr-FR";
 const MINE = cfg.platforms || ["netflix", "prime", "appletv", "hbo", "crunchyroll"];
 const MAX = cfg.max || 12;
 const YT_KEY = (process.env.YOUTUBE_KEY || "").trim();
-const RAWG_KEY = (process.env.RAWG_KEY || "").trim();
+const IGDB_ID = (process.env.IGDB_CLIENT_ID || "").trim();
+const IGDB_SECRET = (process.env.IGDB_CLIENT_SECRET || "").trim();
 const YT = cfg.youtube || {};
 const GAMES = cfg.games || {};
 
@@ -241,43 +243,90 @@ async function youtube() {
   return out;
 }
 
-// ── Jeux : RPG, indé et puzzle du moment sur PS5 et Switch (RAWG) ─
+// ── Jeux : RPG, indé et puzzle du moment sur PS5 et Switch (IGDB) ─
+// IGDB (la base de jeux de Twitch) : jeux sortis ces derniers mois ou qui sortent bientôt, classés selon ce que ses
+// membres jouent et veulent jouer en ce moment, et selon l’attente avant leur sortie.
+async function igdb(token, endpoint, body) {
+  const r = await get("https://api.igdb.com/v4/" + endpoint, {
+    method: "POST",
+    headers: { "Client-ID": IGDB_ID, Authorization: "Bearer " + token, Accept: "application/json", "Content-Type": "text/plain" },
+    body
+  }, 2);
+  await sleep(300); // IGDB accepte 4 requêtes par seconde
+  return r.json();
+}
+
 async function games() {
-  if (!RAWG_KEY) return [];
-  const today = new Date();
-  const from = new Date(today.getTime() - (GAMES.days || 150) * 86400000).toISOString().slice(0, 10);
-  const to = new Date(today.getTime() + 30 * 86400000).toISOString().slice(0, 10);
-  const kinds = [
-    { genres: "role-playing-games-rpg", reason: "Tendance RPG", n: 2 },
-    { genres: "indie", reason: "Pépite indé du moment", n: 1 },
-    { genres: "puzzle", reason: "Puzzle du moment", n: 1 }
-  ];
-  const out = [];
-  const taken = new Set();
-  for (const k of kinds) {
+  if (!IGDB_ID || !IGDB_SECRET) return [];
+  let token;
+  try {
+    // Identifiants dans le corps de la requête (jamais dans l’adresse, qui peut apparaître dans le journal en cas d’erreur).
+    const r = await get("https://id.twitch.tv/oauth2/token", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({ client_id: IGDB_ID, client_secret: IGDB_SECRET, grant_type: "client_credentials" }).toString()
+    }, 2);
+    token = (await r.json()).access_token;
+    if (!token) throw new Error("pas de jeton");
+  } catch (e) {
+    log("Jeux : connexion à IGDB impossible (" + e.message + "). Vérifie IGDB_CLIENT_ID et IGDB_CLIENT_SECRET.");
+    return [];
+  }
+  try {
+    // Plateformes : PS5, Switch et Switch 2.
+    let ps = [167], ns = [130];
     try {
-      const u = new URL("https://api.rawg.io/api/games");
-      u.search = new URLSearchParams({ key: RAWG_KEY, genres: k.genres, platforms: "187,7", dates: from + "," + to, ordering: "-added", page_size: "20" });
-      const list = L.rawgGames(await (await get(u)).json());
+      const plats = await igdb(token, "platforms", 'fields id,slug; where slug = ("ps5","switch","switch-2"); limit 10;');
+      if (plats.some((p) => p.slug === "ps5")) ps = plats.filter((p) => p.slug === "ps5").map((p) => p.id);
+      if (plats.some((p) => /^switch/.test(p.slug))) ns = plats.filter((p) => /^switch/.test(p.slug)).map((p) => p.id);
+    } catch (e) { log("Jeux : plateformes IGDB par défaut (" + e.message + ")."); }
+    // Popularité du moment : listes « en train d’y jouer » (3) et « envie d’y jouer » (2) des membres d’IGDB.
+    const pop = {};
+    for (const [type, weight] of [[3, 1.2], [2, 1]]) {
+      try {
+        const list = await igdb(token, "popularity_primitives", "fields game_id,value; where popularity_type = " + type + "; sort value desc; limit 500;");
+        list.forEach((p, i) => { pop[p.game_id] = (pop[p.game_id] || 0) + weight * (1 - i / list.length); });
+      } catch (e) { log("Jeux : popularité IGDB (" + type + ") indisponible (" + e.message + ")."); }
+    }
+    const now = Math.floor(Date.now() / 1000);
+    const from = now - (GAMES.days || 150) * 86400, to = now + 45 * 86400;
+    const kinds = [
+      { genre: 12, label: "RPG", reason: "Tendance RPG", n: 2 },
+      { genre: 32, label: "Indé", reason: "Pépite indé du moment", n: 1 },
+      { genre: 9, label: "Puzzle", reason: "Puzzle du moment", n: 1 }
+    ];
+    const raw = await igdb(token, "games",
+      "fields name,first_release_date,genres,platforms,hypes,total_rating,total_rating_count," +
+      "artworks.image_id,artworks.width,artworks.height,screenshots.image_id,screenshots.width,screenshots.height;" +
+      " where platforms = (" + ps.concat(ns).join(",") + ") & genres = (" + kinds.map((k) => k.genre).join(",") + ")" +
+      " & first_release_date >= " + from + " & first_release_date <= " + to + " & parent_game = null & version_parent = null;" +
+      " sort hypes desc; limit 500;");
+    const pool = L.igdbGames(raw, { pop, ps, ns });
+    const out = [];
+    const taken = new Set();
+    for (const k of kinds) {
       let n = 0;
-      for (const g of list) {
-        if (n >= k.n || taken.has(g.id)) continue;
+      for (const g of pool) {
+        if (n >= k.n || taken.has(g.id) || g.genres.indexOf(k.genre) < 0) continue;
         taken.add(g.id);
         n++;
         const app = g.ps5 ? "ps5" : "switch";
-        const detail = ["Jeu", app === "ps5" ? "PS5" : "Switch", g.released ? g.released.slice(0, 4) : null, g.genres[0] || null].filter(Boolean).join(" · ");
+        const soon = g.released && g.released > new Date().toISOString().slice(0, 10);
+        const reason = soon ? "Bientôt : " + new Date(g.released).toLocaleDateString("fr-FR", { day: "numeric", month: "long" }) : k.reason;
+        const detail = ["Jeu", app === "ps5" ? "PS5" : "Switch", g.released ? g.released.slice(0, 4) : null, k.label].filter(Boolean).join(" · ");
         out.push({
-          key: "game:" + g.id, kind: "game", app, signals: [{ type: "game", reason: k.reason, bonus: Math.max(0, 6 - n * 2) }],
-          out: { id: "game:" + g.id, kind: "game", title: g.title, app, platform: app === "ps5" ? "PS5" : "Nintendo Switch", reason: k.reason, detail,
-            overview: "", backdrop: L.rawgImage(g.image, 1920), thumb: L.rawgImage(g.image, 640), logo: null, trailer: null }
+          key: "game:" + g.id, kind: "game", app, signals: [{ type: "game", reason, bonus: Math.max(0, 6 - n * 2) }],
+          out: { id: "game:" + g.id, kind: "game", title: g.title, app, platform: app === "ps5" ? "PS5" : "Nintendo Switch", reason, detail,
+            overview: "", backdrop: g.backdrop, thumb: g.thumb, uhd: g.uhd, logo: null, trailer: null }
         });
       }
-    } catch (e) {
-      log("Jeux (" + k.genres + ") indisponibles : " + e.message);
     }
+    log("Jeux : IGDB,", (raw || []).length, "jeux récents,", pool.length, "candidats,", out.length, "retenus" + (out.length ? " (" + out.map((o) => o.out.title).join(", ") + ")" : ""));
+    return out;
+  } catch (e) {
+    log("Jeux indisponibles (IGDB) : " + e.message);
+    return [];
   }
-  log("Jeux :", out.length, "retenus");
-  return out;
 }
 
 // ── Assemblage ───────────────────────────────────────────────
@@ -407,7 +456,7 @@ async function main() {
     generatedAt: new Date().toISOString(),
     region: REGION,
     items,
-    credits: "Données et images : TMDB (ce produit utilise l’API TMDB mais n’est ni approuvé ni certifié par TMDB). Disponibilités : JustWatch." + (RAWG_KEY ? " Jeux : RAWG (rawg.io)." : "") + (extra.some((c) => c.kind === "video") ? " Vidéos : YouTube." : "")
+    credits: "Données et images : TMDB (ce produit utilise l’API TMDB mais n’est ni approuvé ni certifié par TMDB). Disponibilités : JustWatch." + (extra.some((c) => c.kind === "game") ? " Jeux : IGDB (igdb.com)." : "") + (extra.some((c) => c.kind === "video") ? " Vidéos : YouTube." : "")
   };
   fs.mkdirSync(path.dirname(OUT), { recursive: true });
   fs.writeFileSync(OUT, JSON.stringify(out, null, 1));
