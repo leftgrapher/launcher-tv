@@ -678,7 +678,7 @@ ${(v?.editBar?.on) ? html`
 </div>
 </div>
 
-<div style="position: absolute; top: 60px; right: 56px; height: 56px; display: flex; align-items: center; gap: 24px">
+<div data-topbar="1" style="position: absolute; top: 60px; right: 56px; height: 56px; display: flex; align-items: center; gap: 24px">
 <span role="img" aria-label="${v?.meteo?.aria}" style="display: flex; align-items: center; gap: 10px; font-size: 30px; font-weight: 500; letter-spacing: -0.01em; font-variant-numeric: tabular-nums; text-shadow: 0 2px 16px rgba(0, 0, 0, 0.35); opacity: ${v?.meteo?.opacity}; transition: opacity 400ms ease">
 <span aria-hidden="true" style="display: flex; color: #F5F5F7">
 ${(v?.meteo?.soleil) ? html`<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2"></path><path d="M12 20v2"></path><path d="m4.93 4.93 1.41 1.41"></path><path d="m17.66 17.66 1.41 1.41"></path><path d="M2 12h2"></path><path d="M20 12h2"></path><path d="m6.34 17.66-1.41 1.41"></path><path d="m19.07 4.93-1.41 1.41"></path></svg>` : null}

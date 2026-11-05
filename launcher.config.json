@@ -18,7 +18,8 @@
       "channelId": "UCLdcxvBYzsfGj4ziVuFwu-A",
       "channels": [],
       "max": 3,
-      "days": 10
+      "days": 10,
+      "openIn": "youtubeapp"
     },
     "games": {
       "days": 150

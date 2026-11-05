@@ -4,7 +4,7 @@
 import { Component } from "preact";
 import * as MainBoard from "./boards/main.js";
 import * as HubBoard from "./boards/hub.js";
-import { onTV, launchApp, launchYoutubeVideo, showSource, quitLauncher, HDMI, store, note } from "./tv.js";
+import { onTV, launchApp, launchYoutubeVideo, launchYoutubeOfficial, showSource, quitLauncher, HDMI, store, note } from "./tv.js";
 import { openFx, rectIn } from "./launch-fx.js";
 import * as video from "./video.js";
 import { playFast, warmSounds } from "./sounds.js";
@@ -199,10 +199,13 @@ export function makeBoards(html) {
       const before = this._memo();
       super._launchHero(r, el);
       if (!onTV) return;
+      // Vidéo YouTube : dans TizenTube, ou dans l’appli officielle si les recos le demandent (recos.youtube.openIn).
+      const official = r.app === "youtube" && r.video && r.openIn === "youtubeapp";
+      const tile = official ? "youtubeapp" : r.app;
       this._deferOpen((s) => Object.assign({
         launch: Object.assign({}, s.launch, { phase: "open", card: s.launch && s.launch.card != null ? "0" : null }),
-        lastOpen: r.app, focus: r.app, lastFav: r.app
-      }, this._opened(s, r.app)));
+        lastOpen: tile, focus: tile, lastFav: tile
+      }, this._opened(s, tile)));
       if (HDMI[r.app]) {
         this._srcP = video.full(HDMI[r.app]);
         this._startFx(el, { id: r.app, image: r.backdrop || null });
@@ -211,7 +214,7 @@ export function makeBoards(html) {
       }
       this._wait(el);
       if (!el) toast("Ouverture dans " + (r.name || "l’appli") + "…");
-      this._goOut(() => (r.app === "youtube" && r.video ? launchYoutubeVideo(r.video) : launchApp(r.app)), r.name, before);
+      this._goOut(() => (official ? launchYoutubeOfficial(r.video) : r.app === "youtube" && r.video ? launchYoutubeVideo(r.video) : launchApp(r.app)), r.name, before);
     }
 
     // Source HDMI : son image en direct passe sous l’écran qui grandit, qui s’efface ensuite pour la laisser voir ;

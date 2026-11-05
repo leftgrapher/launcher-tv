@@ -12,10 +12,10 @@ export function template(v, html) {
   return html`<div data-hub="1" onMouseEnter="${v?.claimRemote}" onMouseDown="${v?.claimRemote}" style="position: relative; width: 1920px; height: 1080px; overflow: hidden; background: transparent; color: #F5F5F7; font-family: 'Inter', system-ui, sans-serif; font-optical-sizing: auto">
 
 <svg aria-hidden="true" width="0" height="0" style="position: absolute"><filter id="lg-refract" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB"><feTurbulence type="fractalNoise" baseFrequency="0.011 0.011" numOctaves="2" seed="7" result="bruit"></feTurbulence><feGaussianBlur in="bruit" stdDeviation="2" result="doux"></feGaussianBlur><feDisplacementMap in="SourceGraphic" in2="doux" scale="22" xChannelSelector="R" yChannelSelector="G"></feDisplacementMap></filter></svg>
-<div aria-hidden="true" style="position: absolute; inset: 0; background: rgba(5, 7, 14, 0.18)"></div>
-<div aria-hidden="true" style="position: absolute; inset: 0; background: linear-gradient(270deg, rgba(5, 7, 14, 0.62) 0%, rgba(5, 7, 14, 0.36) 28%, rgba(5, 7, 14, 0) 52%); animation: ${v?.scrimAnim}"></div>
+<div aria-hidden="true" data-hub-scrim="1" style="position: absolute; inset: 0; background: rgba(5, 7, 14, 0.18)"></div>
+<div aria-hidden="true" data-hub-scrim="1" style="position: absolute; inset: 0; background: linear-gradient(270deg, rgba(5, 7, 14, 0.62) 0%, rgba(5, 7, 14, 0.36) 28%, rgba(5, 7, 14, 0) 52%); animation: ${v?.scrimAnim}"></div>
 
-<div style="position: absolute; top: 60px; right: 56px; height: 56px; display: flex; align-items: center; gap: 24px">
+<div data-hub-top="1" style="position: absolute; top: 60px; right: 56px; height: 56px; display: flex; align-items: center; gap: 24px">
 <span style="font-size: 30px; font-weight: 500; letter-spacing: -0.01em; font-variant-numeric: tabular-nums; text-shadow: 0 2px 16px rgba(0, 0, 0, 0.35)">${v?.heure}</span>
 <a href="Main.dc.html" aria-label="Fermer le hub" style="width: 56px; height: 56px; border-radius: 28px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; color: #0B0C0F; text-decoration: none; background: #F5F5F7; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3)">
 <svg aria-hidden="true" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 17H5"></path><path d="M19 7h-9"></path><circle cx="17" cy="17" r="3"></circle><circle cx="7" cy="7" r="3"></circle></svg>

@@ -24,6 +24,6 @@ export function heroItems(data, base) {
   return ((data && data.items) || []).map((it) => ({
     id: it.id, kind: it.kind, tmdb: it.tmdb,
     title: it.title, app: it.app, reason: it.reason, detail: it.detail,
-    backdrop: abs(it.backdrop), thumb: abs(it.thumb), logo: abs(it.logo), bg4k: abs(it.bg4k) || null, video: it.video || null
+    backdrop: abs(it.backdrop), thumb: abs(it.thumb), logo: abs(it.logo), bg4k: abs(it.bg4k) || null, video: it.video || null, openIn: it.openIn || null
   }));
 }

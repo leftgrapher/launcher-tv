@@ -28,8 +28,15 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#05070E}
 #launcher{position:fixed;left:0;top:0;width:1920px;height:1080px;transform-origin:0 0;overflow:hidden}
 .board{position:absolute;left:0;top:0;width:1920px;height:1080px}
 .board-hub{z-index:5}
+/* Hub ouvert : l’accueil reste en place sous le panneau. Seuls ses boutons arrivent par le côté ; la barre du haut
+   (météo, heure, bouton du hub) ne bouge pas et n’est pas assombrie, le reste de l’écran l’est (voile de la maquette). */
+.board-hub [data-hub-scrim],.board-hub [data-hub-top]{display:none!important}
+[data-topbar]{z-index:4}
+.board-main [data-launcher]::after{content:"";position:absolute;inset:0;z-index:3;pointer-events:none;opacity:0;will-change:opacity;transition:opacity 220ms ease;
+  background:linear-gradient(270deg,rgba(5,7,14,.62) 0%,rgba(5,7,14,.36) 28%,rgba(5,7,14,0) 52%),rgba(5,7,14,.18)}
+.board-main.hub-on [data-launcher]::after{opacity:1;transition-duration:300ms}
 .board-hub.out{animation:hubOut 260ms cubic-bezier(.4,0,.2,1) forwards;pointer-events:none}
-@keyframes hubOut{to{opacity:0;transform:translateX(28px)}}
+@keyframes hubOut{to{opacity:0;transform:translateX(96px)}}
 .launcher-toast{position:absolute;left:50%;top:56px;z-index:50;transform:translate(-50%,-16px);opacity:0;padding:16px 28px;border-radius:999px;
   background:rgba(22,24,31,.86);backdrop-filter:blur(30px);-webkit-backdrop-filter:blur(30px);color:#F5F5F7;font:500 22px/1.2 Inter,system-ui,sans-serif;
   box-shadow:0 12px 40px rgba(0,0,0,.35);transition:opacity 260ms ease,transform 360ms cubic-bezier(.34,1.4,.5,1);pointer-events:none;white-space:nowrap}
@@ -96,7 +103,7 @@ html.v-quit #launcher{opacity:0;transition:opacity 240ms ease}
 .board-hub.off{opacity:0;pointer-events:none}
 .board-hub.in{animation:hubInTV 280ms cubic-bezier(0.2,0.9,0.3,1) both}
 .board-hub.out{animation-duration:220ms!important}
-@keyframes hubInTV{from{opacity:0;transform:translateX(36px)}to{opacity:1;transform:none}}
+@keyframes hubInTV{from{opacity:0;transform:translateX(96px)}to{opacity:1;transform:none}}
 `;
 
 function injectCss() {
@@ -247,7 +254,7 @@ class App extends Component {
 
   render(_, s) {
     return html`
-      <div class="board board-main"><${Main} ...${mainProps} recos=${s.recos} meteo=${s.meteo} /></div>
+      <div class=${"board board-main" + (s.hub === "in" ? " hub-on" : "")}><${Main} ...${mainProps} recos=${s.recos} meteo=${s.meteo} /></div>
       ${onTV
         ? (s.hubReady ? html`<div class=${"board board-hub" + (s.hub === "in" ? " in" : s.hub === "out" ? " out" : " off")}><${Hub} ref=${(r) => (this._hub = r)} premount=${true} ...${hubProps} /></div>` : null)
         : s.hub ? html`<div class=${"board board-hub" + (s.hub === "out" ? " out" : "")}><${Hub} key=${s.hubKey} ...${hubProps} /></div>` : null}

@@ -239,7 +239,7 @@ async function youtube() {
     const date = new Date(v.published).toLocaleDateString("fr-FR", { day: "numeric", month: "long" });
     out.push({
       key: "video:" + v.id, kind: "video", app: "youtube", signals: [{ type: "video", reason: "Nouvelle vidéo de " + v.channel, bonus: Math.max(0, 8 - Math.round(v.age)) }],
-      out: { id: "video:" + v.id, kind: "video", video: v.id, title: v.title, app: "youtube", platform: "YouTube", reason: "Nouvelle vidéo de " + v.channel,
+      out: { id: "video:" + v.id, kind: "video", video: v.id, openIn: YT.openIn || null, title: v.title, app: "youtube", platform: "YouTube", reason: "Nouvelle vidéo de " + v.channel,
         detail: "Vidéo · " + v.channel + " · " + date, overview: "", backdrop: img, thumb: "https://i.ytimg.com/vi/" + v.id + "/mqdefault.jpg", logo: null, trailer: null }
     });
   }

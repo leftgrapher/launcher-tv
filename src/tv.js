@@ -180,7 +180,31 @@ export async function launchYoutubeVideo(videoId) {
       note("vidéo YouTube → " + id + " : " + ((e && ((e.name || "") + " " + (e.message || "")).trim()) || e));
     }
   }
-  return launchApp("youtube");
+  // TizenTube introuvable ou refusé : l’appli YouTube officielle.
+  return launchYoutubeOfficial(videoId);
+}
+
+// Ouvre une vidéo dans l’appli YouTube officielle. Samsung ne documente pas comment lui désigner une vidéo : on la lui
+// passe sous les deux formes connues sur Tizen (adresse de la vidéo, et données « PAYLOAD » comme les aperçus Smart Hub).
+// Si l’appli ne les comprend pas, elle s’ouvre simplement sur son accueil, avec ses propres recos.
+export async function launchYoutubeOfficial(videoId) {
+  if (!onTV) return false;
+  const url = "https://www.youtube.com/watch?v=" + videoId;
+  const ids = await candidates("youtubeapp");
+  for (const id of ids) {
+    try {
+      await withTimeout(new Promise((res, rej) => {
+        const ctl = new T.ApplicationControl("http://tizen.org/appcontrol/operation/view", url, null, null,
+          [new T.ApplicationControlData("PAYLOAD", [JSON.stringify({ values: "v=" + videoId })])]);
+        T.application.launchAppControl(ctl, id, res, rej);
+      }), 6000, "vidéo YouTube (officielle)");
+      note("vidéo YouTube " + videoId + " → appli officielle " + id);
+      return true;
+    } catch (e) {
+      note("vidéo YouTube (officielle) → " + id + " : " + ((e && ((e.name || "") + " " + (e.message || "")).trim()) || e));
+    }
+  }
+  return launchApp("youtubeapp");
 }
 
 // Bascule la TV sur une entrée HDMI, puis ouvre l’écran TV de Samsung sur cette source (mode jeu, VRR… restent ceux de la TV).
